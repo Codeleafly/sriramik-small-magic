@@ -15,6 +15,12 @@ export class Game {
         this.frames = 0;
         this.speed = 2.5;
         this.highScore = parseInt(localStorage.getItem('flappyHighScore')) || 0;
+        this.medalCounts = JSON.parse(localStorage.getItem('flappyMedalCounts')) || {
+            BRONZE: 0,
+            SILVER: 0,
+            GOLD: 0,
+            PLATINUM: 0
+        };
         
         this.audioController = new AudioController();
         this.bird = new Bird(canvas, Assets.images.bird, this.audioController);
@@ -145,6 +151,10 @@ export class Game {
             noMedalEl.style.display = 'none';
             medalEl.src = medalInfo.src;
             medalNameEl.innerText = medalInfo.name;
+
+            // Increment and save medal count
+            this.medalCounts[medalInfo.name]++;
+            localStorage.setItem('flappyMedalCounts', JSON.stringify(this.medalCounts));
         }
 
         document.getElementById('gameOverScreen').style.display = 'block';

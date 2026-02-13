@@ -247,3 +247,26 @@ h1 {
     color: #3E2723;
     font-size: 12px;
 }
+
+/* Medal Badges */
+.medal-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255,255,255,0.5);
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid #8B4513;
+}
+
+.medal-badge img {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 2px;
+}
+
+.medal-badge span {
+    font-family: 'Press Start 2P';
+    font-size: 8px;
+    color: #5D4037;
+}

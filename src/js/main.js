@@ -80,6 +80,12 @@ function updateHomeMedal() {
     const homeMedalIcon = document.getElementById('homeBestMedalIcon');
     const homeMedalName = document.getElementById('homeBestMedalName');
 
+    // Update individual counts
+    for (const [medal, count] of Object.entries(game.medalCounts)) {
+        const el = document.getElementById(`count-${medal}`);
+        if (el) el.innerText = count;
+    }
+
     if (highScore >= 5) {
         homeRecord.style.display = 'block';
         homeScore.innerText = highScore;
