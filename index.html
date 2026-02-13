@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flapfing - AI Controlled Game</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="src/css/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Mediapipe Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <h2 style="font-family: 'Press Start 2P'; margin-bottom: 20px;">LOADING FLAPFING...</h2>
+        <div class="loading-bar-container">
+            <div id="loadingFill" class="loading-bar-fill" style="width: 100%;"></div>
+        </div>
+        <div id="loadingPercent" class="loading-text">100%</div>
+        <div id="currentFile" style="font-size: 12px; margin-top: 5px; opacity: 0.7;">Initializing Modules...</div>
+    </div>
+
+    <!-- Game Elements -->
+    <video id="input_video"></video>
+    <canvas id="gameCanvas"></canvas>
+    <div id="scoreBoard">0</div>
+
+    <!-- Camera Box -->
+    <div id="cameraBox" class="camera-container">
+        <div id="cameraLoader" class="camera-loader">
+            <div class="spinner camera-spinner"></div>
+            <div>Starting<br>Camera...</div>
+        </div>
+        <canvas id="output_canvas"></canvas>
+    </div>
+
+    <!-- Instruction Bar -->
+    <div class="instruction-bar">
+        STATUS: <span id="statusText">System Loading...</span> | TIP: Pinch <span class="highlight-text">Thumb & Index</span> to Jump
+    </div>
+
+    <!-- Start Screen -->
+    <div id="startScreen" class="wood-panel">
+        <h1 class="flappy-title">FLAPFING</h1>
+        <img id="homeBird" src="public/assets/bird.svg" alt="Bird">
+        <p class="mb-4 text-gray-800 font-bold" id="startInstruction">Enable Camera to Play</p>
+        
+        <button id="enableCameraBtn" class="btn btn-secondary">
+            ENABLE CAMERA
+        </button>
+
+        <button id="startBtn" class="btn" style="display: none;">
+            START GAME
+        </button>
+        
+        <p id="gestureHint" class="mt-4 text-xs text-green-800 font-bold animate-pulse" style="display: none;">
+            or PINCH to START!
+        </p>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="wood-panel">
+        <h1>GAME OVER</h1>
+        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 15px;">
+            <img id="medal" src="" alt="Medal" style="width: 60px; height: 60px; margin-right: 20px; display: none;">
+            <p id="finalScore" class="text-xl font-bold text-gray-800" style="margin: 0;">Score: 0</p>
+        </div>
+        <button id="retryBtn" class="btn">RETRY</button>
+        <p class="mt-4 text-xs text-green-800 font-bold animate-pulse">
+            or PINCH to RETRY!
+        </p>
+    </div>
+
+    <!-- Main Module -->
+    <script type="module" src="src/js/main.js"></script>
+</body>
+</html>
