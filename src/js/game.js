@@ -13,7 +13,8 @@ export class Game {
         this.gameRunning = false;
         this.score = 0;
         this.frames = 0;
-        this.speed = 2.5; // Game speed
+        this.speed = 2.5;
+        this.highScore = parseInt(localStorage.getItem('flappyHighScore')) || 0;
         
         this.audioController = new AudioController();
         this.bird = new Bird(canvas, Assets.images.bird, this.audioController);
@@ -118,19 +119,33 @@ export class Game {
         this.stop();
         this.audioController.playSound('die');
         
-        const finalScoreEl = document.getElementById('finalScore');
-        finalScoreEl.innerText = 'Score: ' + this.score;
-        
-        const medalEl = document.getElementById('medal');
-        medalEl.style.display = 'none';
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            localStorage.setItem('flappyHighScore', this.highScore);
+        }
 
-        if (this.score >= 10) {
+        const finalScoreEl = document.getElementById('finalScore');
+        finalScoreEl.innerText = this.score;
+        
+        const bestScoreEl = document.getElementById('bestScore');
+        bestScoreEl.innerText = this.highScore;
+
+        const medalEl = document.getElementById('medal');
+        const noMedalEl = document.getElementById('noMedalPlaceholder');
+        
+        medalEl.style.display = 'none';
+        noMedalEl.style.display = 'block'; // Reset to show placeholder
+
+        // Medal Logic: 5+ Bronze, 10+ Silver, 20+ Gold, 40+ Platinum
+        if (this.score >= 5) {
             medalEl.style.display = 'block';
-            if (this.score >= 50) {
+            noMedalEl.style.display = 'none'; // Hide placeholder
+            
+            if (this.score >= 40) {
                 medalEl.src = 'public/assets/medal_platinum.svg';
-            } else if (this.score >= 30) {
-                medalEl.src = 'public/assets/medal_gold.svg';
             } else if (this.score >= 20) {
+                medalEl.src = 'public/assets/medal_gold.svg';
+            } else if (this.score >= 10) {
                 medalEl.src = 'public/assets/medal_silver.svg';
             } else {
                 medalEl.src = 'public/assets/medal_bronze.svg';
