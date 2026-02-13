@@ -3,7 +3,7 @@ export class AudioController {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         this.bgMusic = new Audio('public/assets/music.mp3');
         this.bgMusic.loop = true;
-        this.bgMusic.volume = 0.8;
+        this.bgMusic.volume = 1.0;
         
         // Check if user has interacted to unlock AudioContext
         this.unlocked = false;

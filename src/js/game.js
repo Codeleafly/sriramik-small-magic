@@ -131,28 +131,36 @@ export class Game {
         bestScoreEl.innerText = this.highScore;
 
         const medalEl = document.getElementById('medal');
+        const medalNameEl = document.getElementById('medalName');
         const noMedalEl = document.getElementById('noMedalPlaceholder');
         
         medalEl.style.display = 'none';
-        noMedalEl.style.display = 'block'; // Reset to show placeholder
+        medalNameEl.innerText = '';
+        noMedalEl.style.display = 'block';
 
         // Medal Logic: 5+ Bronze, 10+ Silver, 20+ Gold, 40+ Platinum
-        if (this.score >= 5) {
+        const medalInfo = this.getMedalInfo(this.score);
+        if (medalInfo) {
             medalEl.style.display = 'block';
-            noMedalEl.style.display = 'none'; // Hide placeholder
-            
-            if (this.score >= 40) {
-                medalEl.src = 'public/assets/medal_platinum.svg';
-            } else if (this.score >= 20) {
-                medalEl.src = 'public/assets/medal_gold.svg';
-            } else if (this.score >= 10) {
-                medalEl.src = 'public/assets/medal_silver.svg';
-            } else {
-                medalEl.src = 'public/assets/medal_bronze.svg';
-            }
+            noMedalEl.style.display = 'none';
+            medalEl.src = medalInfo.src;
+            medalNameEl.innerText = medalInfo.name;
         }
 
         document.getElementById('gameOverScreen').style.display = 'block';
+    }
+
+    getMedalInfo(score) {
+        if (score >= 40) {
+            return { name: 'PLATINUM', src: 'public/assets/medal_platinum.svg' };
+        } else if (score >= 20) {
+            return { name: 'GOLD', src: 'public/assets/medal_gold.svg' };
+        } else if (score >= 10) {
+            return { name: 'SILVER', src: 'public/assets/medal_silver.svg' };
+        } else if (score >= 5) {
+            return { name: 'BRONZE', src: 'public/assets/medal_bronze.svg' };
+        }
+        return null;
     }
 
     // Input handlers

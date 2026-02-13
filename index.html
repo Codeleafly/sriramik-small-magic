@@ -50,6 +50,19 @@
     <div id="startScreen" class="wood-panel">
         <h1 class="flappy-title">FLAPFING</h1>
         <img id="homeBird" src="public/assets/bird.svg" alt="Bird">
+        
+        <!-- Best Record Section -->
+        <div id="homeBestRecord" style="background: rgba(0,0,0,0.1); border-radius: 12px; padding: 10px; margin-bottom: 20px; display: none;">
+            <p style="font-size: 10px; color: #5D4037; font-weight: bold; margin-bottom: 8px;">YOUR BEST RECORD</p>
+            <div style="display: flex; align-items: center; justify-content: center;">
+                <img id="homeBestMedalIcon" src="" style="width: 40px; height: 40px; margin-right: 10px;">
+                <div style="text-align: left;">
+                    <p id="homeBestMedalName" style="font-family: 'Press Start 2P'; font-size: 8px; color: #E86A17; margin: 0;"></p>
+                    <p style="font-family: 'Press Start 2P'; font-size: 10px; color: #3E2723; margin: 2px 0 0 0;">BEST: <span id="homeBestScore">0</span></p>
+                </div>
+            </div>
+        </div>
+
         <p class="mb-4 text-gray-800 font-bold" id="startInstruction">Enable Camera to Play</p>
         
         <button id="enableCameraBtn" class="btn btn-secondary">
@@ -73,6 +86,7 @@
             <div style="flex: 0 0 70px; text-align: center;">
                 <p style="font-size: 10px; color: #E86A17; margin-bottom: 5px; font-weight: bold;">MEDAL</p>
                 <img id="medal" src="" alt="Medal" style="width: 50px; height: 50px; display: none; margin: 0 auto;">
+                <p id="medalName" style="font-size: 8px; font-family: 'Press Start 2P'; color: #5D4037; margin-top: 5px; line-height: 1.2;"></p>
                 <div id="noMedalPlaceholder" style="width: 44px; height: 44px; background: rgba(0,0,0,0.1); border-radius: 50%; margin: 3px auto; display: block;"></div> 
             </div>
             

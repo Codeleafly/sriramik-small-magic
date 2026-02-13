@@ -228,6 +228,16 @@ h1 {
     display: block;
 }
 
+#medal, #homeBestMedalIcon {
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+    animation: medal-glow 3s infinite alternate;
+}
+
+@keyframes medal-glow {
+    from { filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.3)); }
+    to { filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8)); }
+}
+
 @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-15px); }

@@ -33,6 +33,7 @@ async function init() {
 
     // Initial Resize
     game.resize();
+    updateHomeMedal();
 
     // Event Listeners
     startBtn.addEventListener('click', startGame);
@@ -67,7 +68,34 @@ function startGame() {
 }
 
 function resetGame() {
+    updateHomeMedal();
     startGame();
+}
+
+function updateHomeMedal() {
+    if (!game) return;
+    const highScore = game.highScore;
+    const homeRecord = document.getElementById('homeBestRecord');
+    const homeScore = document.getElementById('homeBestScore');
+    const homeMedalIcon = document.getElementById('homeBestMedalIcon');
+    const homeMedalName = document.getElementById('homeBestMedalName');
+
+    if (highScore >= 5) {
+        homeRecord.style.display = 'block';
+        homeScore.innerText = highScore;
+        const medalInfo = game.getMedalInfo(highScore);
+        if (medalInfo) {
+            homeMedalIcon.src = medalInfo.src;
+            homeMedalName.innerText = medalInfo.name + " MEDAL";
+        }
+    } else if (highScore > 0) {
+        homeRecord.style.display = 'block';
+        homeScore.innerText = highScore;
+        homeMedalIcon.style.display = 'none';
+        homeMedalName.innerText = "NO MEDAL YET";
+    } else {
+        homeRecord.style.display = 'none';
+    }
 }
 
 // --- MEDIAPIPE SETUP ---

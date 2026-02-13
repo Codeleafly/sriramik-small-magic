@@ -42,7 +42,7 @@ export const Assets = {
 
         // Load Audio
         this.sounds.background.loop = true;
-        this.sounds.background.volume = 0.8;
+        this.sounds.background.volume = 1.0;
 
         // Generate synthetic sounds for now if we don't have files
         // (User asked for custom sound effects, I'll synthesize them using AudioContext in audio.js, 
