@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sriramiks-small-magic.netlify.app/sitemap.xml
