@@ -270,3 +270,42 @@ h1 {
     font-size: 8px;
     color: #5D4037;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+    #startScreen, #gameOverScreen {
+        width: 92%;
+        padding: 15px;
+    }
+
+    .flappy-title {
+        font-size: 24px !important;
+        -webkit-text-stroke: 1px #000;
+        text-shadow: 2px 2px 0 #000;
+    }
+
+    #scoreBoard {
+        font-size: 24px;
+        top: 10px;
+        left: 10px;
+    }
+
+    .instruction-bar {
+        font-size: 10px;
+        padding: 8px 5px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 12px;
+    }
+
+    #medalsCollection {
+        padding: 8px;
+    }
+
+    .medal-badge img {
+        width: 20px;
+        height: 20px;
+    }
+}

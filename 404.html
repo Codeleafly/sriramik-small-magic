@@ -3,27 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Not Found - Flapfing</title>
+    <title>404 - Lost in the Clouds</title>
     <link rel="stylesheet" href="src/css/style.css">
     <style>
         body {
+            background: #70c5ce;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
             text-align: center;
         }
-        h1 { font-size: 40px; margin-bottom: 20px; }
-        p { font-size: 18px; color: #333; margin-bottom: 30px; }
+        .error-code {
+            font-size: 80px;
+            font-family: 'Press Start 2P', cursive;
+            color: #f1c40f;
+            -webkit-text-stroke: 3px #000;
+            text-shadow: 6px 6px 0 #000;
+            margin-bottom: 20px;
+        }
+        .message {
+            font-size: 16px;
+            color: #3E2723;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-weight: bold;
+        }
+        .lost-bird {
+            width: 100px;
+            animation: confused 4s ease-in-out infinite;
+            margin-bottom: 30px;
+        }
+        @keyframes confused {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-20px, -10px) rotate(-15deg); }
+            50% { transform: translate(10px, -20px) rotate(10deg); }
+            75% { transform: translate(-10px, 10px) rotate(-5deg); }
+        }
+        @media (max-width: 480px) {
+            .error-code { font-size: 50px; -webkit-text-stroke: 2px #000; }
+            .message { font-size: 14px; }
+            .lost-bird { width: 80px; }
+        }
     </style>
 </head>
 <body>
-    <div class="wood-panel">
-        <h1 class="flappy-title">404</h1>
-        <img src="public/assets/bird.svg" alt="Lost Bird" style="width: 80px; margin-bottom: 20px;">
-        <p>Whoops! Even the bird got lost.</p>
-        <a href="index.html" class="btn">GO HOME</a>
+    <div class="container wood-panel">
+        <h1 class="error-code">404</h1>
+        <img src="public/assets/bird.svg" alt="Confused Bird" class="lost-bird">
+        <p class="message">OYE! Where are you going? <br> This page doesn't exist. Even the bird is confused!</p>
+        <a href="index.html" class="btn">FLY BACK HOME</a>
     </div>
 </body>
 </html>
