@@ -5,8 +5,7 @@ export const Assets = {
         medalBronze: new Image(),
         medalSilver: new Image(),
         medalGold: new Image(),
-        medalPlatinum: new Image(),
-        message: new Image()
+        medalPlatinum: new Image()
     },
     sounds: {
         background: new Audio('public/assets/music.mp3'),
@@ -36,9 +35,6 @@ export const Assets = {
 
         this.images.medalPlatinum.src = 'public/assets/medal_platinum.svg';
         promises.push(this.loadImagePromise(this.images.medalPlatinum));
-
-        this.images.message.src = 'public/assets/message.svg';
-        promises.push(this.loadImagePromise(this.images.message));
 
         // Load Audio
         this.sounds.background.loop = true;
