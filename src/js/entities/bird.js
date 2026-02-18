@@ -1,15 +1,16 @@
 export class Bird {
-    constructor(canvas, image, soundController) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
-        this.x = canvas.width / 3;
-        this.y = canvas.height / 2;
+    constructor(game, image, soundController) {
+        this.game = game;
+        this.canvas = game.canvas;
+        this.ctx = game.ctx;
+        this.x = game.width / 3;
+        this.y = game.height / 2;
         this.velocity = 0;
         this.gravity = 0.5;
         this.jumpStrength = -8;
-        this.width = 65; // Increased from 50
-        this.height = 50; // Increased from 40
-        this.radius = 25; // Increased from 20
+        this.width = 65;
+        this.height = 50;
+        this.radius = 25;
         this.image = image;
         this.soundController = soundController;
         this.dead = false;
@@ -44,10 +45,10 @@ export class Bird {
             this.velocity = 0; 
         }
         
-        // Floor check happens in game loop usually, but here too
-        if (this.y + this.height/2 >= this.canvas.height) {
-            this.y = this.canvas.height - this.height/2;
-            this.die(); // Game over logic handled by game loop checking 'dead' or returning status
+        // Floor check
+        if (this.y + this.height/2 >= this.game.height) {
+            this.y = this.game.height - this.height/2;
+            this.die();
             return true; // Hit ground
         }
         return false;
@@ -71,8 +72,8 @@ export class Bird {
     }
 
     reset() {
-        this.x = this.canvas.width / 3;
-        this.y = this.canvas.height / 2;
+        this.x = this.game.width / 3;
+        this.y = this.game.height / 2;
         this.velocity = 0;
         this.dead = false;
     }

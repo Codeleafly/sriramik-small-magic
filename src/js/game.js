@@ -23,9 +23,9 @@ export class Game {
         };
         
         this.audioController = new AudioController();
-        this.bird = new Bird(canvas, Assets.images.bird, this.audioController);
+        this.bird = new Bird(this, Assets.images.bird, this.audioController);
         this.pipes = [];
-        this.background = new Background(canvas, Assets.images.background, this.speed / 2); // Parallax speed
+        this.background = new Background(this, Assets.images.background, this.speed / 2); // Parallax speed
         
         this.animationId = null;
 
@@ -35,13 +35,24 @@ export class Game {
     }
 
     resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-        this.width = this.canvas.width;
-        this.height = this.canvas.height;
+        // Set canvas dimensions to viewport size
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        // Handle high DPI screens
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = width * dpr;
+        this.canvas.height = height * dpr;
+        this.ctx.scale(dpr, dpr);
+        
+        // Update logical dimensions
+        this.width = width;
+        this.height = height;
+
         // Re-center bird if game not running
-        if (!this.gameRunning) {
+        if (!this.gameRunning && this.bird) {
             this.bird.y = this.height / 2;
+            this.bird.x = this.width / 3;
         }
     }
 
@@ -87,7 +98,7 @@ export class Game {
         // Pipe Logic
         // Only start generating pipes after 200 frames (gives user time to settle)
         if (this.frames > 200 && this.frames % 150 === 0) {
-            this.pipes.push(new Pipe(this.canvas, this.speed, this.audioController));
+            this.pipes.push(new Pipe(this, this.speed, this.audioController));
         }
 
         for (let i = 0; i < this.pipes.length; i++) {

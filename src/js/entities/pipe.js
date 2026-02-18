@@ -1,12 +1,17 @@
 export class Pipe {
-    constructor(canvas, speed, soundController) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+    constructor(game, speed, soundController) {
+        this.game = game;
+        this.ctx = game.ctx;
         this.speed = speed;
         this.soundController = soundController;
-        this.x = canvas.width;
-        this.topHeight = Math.random() * (canvas.height / 2);
-        this.bottomY = this.topHeight + 220; // Gap height
+        this.x = game.width;
+        
+        // Dynamic gap sizing and positioning
+        const gap = 180 + Math.random() * 60; // Slightly varying gap for interest
+        const minPipeHeight = 50;
+        this.topHeight = minPipeHeight + Math.random() * (game.height - gap - minPipeHeight * 2);
+        this.bottomY = this.topHeight + gap;
+        
         this.width = 80;
         this.color = '#73bf2e';
         this.passed = false;
@@ -21,14 +26,10 @@ export class Pipe {
         // Top Pipe
         this.ctx.fillRect(this.x, 0, this.width, this.topHeight);
         this.ctx.strokeRect(this.x, 0, this.width, this.topHeight);
-        this.ctx.fillRect(this.x - 5, this.topHeight - 30, this.width + 10, 30);
-        this.ctx.strokeRect(this.x - 5, this.topHeight - 30, this.width + 10, 30);
-
+        
         // Bottom Pipe
-        this.ctx.fillRect(this.x, this.bottomY, this.width, this.canvas.height - this.bottomY);
-        this.ctx.strokeRect(this.x, this.bottomY, this.width, this.canvas.height - this.bottomY);
-        this.ctx.fillRect(this.x - 5, this.bottomY, this.width + 10, 30);
-        this.ctx.strokeRect(this.x - 5, this.bottomY, this.width + 10, 30);
+        this.ctx.fillRect(this.x, this.bottomY, this.width, this.game.height - this.bottomY);
+        this.ctx.strokeRect(this.x, this.bottomY, this.width, this.game.height - this.bottomY);
     }
 
     update() {
