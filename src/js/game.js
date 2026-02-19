@@ -15,6 +15,13 @@ export class Game {
         this.frames = 0;
         this.speed = 2.5;
         this.highScore = parseInt(localStorage.getItem('flappyHighScore')) || 0;
+        
+        // FPS Counter
+        this.fps = 0;
+        this.lastTime = performance.now();
+        this.frameCount = 0;
+        this.fpsText = document.getElementById('fpsText');
+
         this.medalCounts = JSON.parse(localStorage.getItem('flappyMedalCounts')) || {
             BRONZE: 0,
             SILVER: 0,
@@ -79,6 +86,16 @@ export class Game {
     loop() {
         if (!this.gameRunning) return;
 
+        // Calculate FPS
+        const now = performance.now();
+        this.frameCount++;
+        if (now >= this.lastTime + 1000) {
+            this.fps = this.frameCount;
+            if (this.fpsText) this.fpsText.innerText = this.fps;
+            this.frameCount = 0;
+            this.lastTime = now;
+        }
+
         this.ctx.clearRect(0, 0, this.width, this.height);
 
         // Update Background
@@ -96,8 +113,8 @@ export class Game {
         }
 
         // Pipe Logic
-        // Start generating pipes after 100 frames (gives user time to settle)
-        if (this.frames > 100 && this.frames % 120 === 0) {
+        // Start generating pipes after ~10 seconds (600 frames at 60fps)
+        if (this.frames > 600 && this.frames % 120 === 0) {
             this.pipes.push(new Pipe(this, this.speed, this.audioController));
         }
 
