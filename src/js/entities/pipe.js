@@ -6,35 +6,21 @@ export class Pipe {
         this.soundController = soundController;
         this.x = game.width;
         
-        // Difficulty Ramp: If score is less than 5, make pipes easier
-        const isEasyMode = this.game.score < 5;
-        
-        // Original game gap size (~105px), slightly larger in easy mode (~120px)
-        this.gap = isEasyMode ? 125 : 105; 
-        
-        // Define vertical position
-        const minPipeHeight = 80;
-        const maxPipeHeight = game.height - this.gap - minPipeHeight;
-        
-        if (isEasyMode) {
-            // Center the gap with a small random jitter (+/- 30px) for first 5 pipes
-            const centerY = (game.height / 2) - (this.gap / 2);
-            const jitter = (Math.random() - 0.5) * 60;
-            this.topHeight = centerY + jitter;
-        } else {
-            // Full randomness for score >= 5
-            this.topHeight = minPipeHeight + Math.random() * (maxPipeHeight - minPipeHeight);
-        }
-        
-        this.bottomY = this.topHeight + this.gap;
-        
+        // Stabilized Difficulty: Balanced gap and random ranges
+        this.gapSize = 120;
         this.width = 52;
+        this.hitboxBuffer = 5;
+        
+        // Adaptive height calculation
+        const minPipeHeight = 80;
+        const maxPipeHeight = game.height - this.gapSize - minPipeHeight;
+        
+        this.topHeight = minPipeHeight + Math.random() * (maxPipeHeight - minPipeHeight);
+        this.bottomY = this.topHeight + this.gapSize;
+        
         this.color = '#73bf2e';
         this.passed = false;
         this.scored = false;
-        
-        // Forgiving hitbox buffer
-        this.hitboxBuffer = 5;
     }
 
     draw() {
@@ -42,23 +28,23 @@ export class Pipe {
         this.ctx.strokeStyle = '#2d4d12';
         this.ctx.lineWidth = 2;
 
-        // Draw Top Pipe
-        this.ctx.fillRect(this.x, 0, this.width, this.topHeight);
-        this.ctx.strokeRect(this.x, 0, this.width, this.topHeight);
-        
-        // Draw Top Pipe Cap
-        const capWidth = this.width + 6;
-        const capHeight = 24;
-        this.ctx.fillRect(this.x - 3, this.topHeight - capHeight, capWidth, capHeight);
-        this.ctx.strokeRect(this.x - 3, this.topHeight - capHeight, capWidth, capHeight);
+        // Draw Pipes
+        this.drawPipe(this.x, 0, this.width, this.topHeight, true);
+        this.drawPipe(this.x, this.bottomY, this.width, this.game.height - this.bottomY, false);
+    }
 
-        // Draw Bottom Pipe
-        this.ctx.fillRect(this.x, this.bottomY, this.width, this.game.height - this.bottomY);
-        this.ctx.strokeRect(this.x, this.bottomY, this.width, this.game.height - this.bottomY);
+    drawPipe(x, y, w, h, isTop) {
+        this.ctx.fillRect(x, y, w, h);
+        this.ctx.strokeRect(x, y, w, h);
         
-        // Draw Bottom Pipe Cap
-        this.ctx.fillRect(this.x - 3, this.bottomY, capWidth, capHeight);
-        this.ctx.strokeRect(this.x - 3, this.bottomY, capWidth, capHeight);
+        // Draw Pipe Caps (Aesthetic update)
+        const capWidth = w + 6;
+        const capHeight = 24;
+        const capX = x - 3;
+        const capY = isTop ? y + h - capHeight : y;
+        
+        this.ctx.fillRect(capX, capY, capWidth, capHeight);
+        this.ctx.strokeRect(capX, capY, capWidth, capHeight);
     }
 
     update() {
@@ -69,7 +55,7 @@ export class Pipe {
     }
 
     checkCollision(bird) {
-        // More forgiving collision detection using a slightly reduced bird hitbox
+        // Simplified, accurate collision with small buffer for "forgiveness"
         const birdLeft = bird.x - bird.radius + this.hitboxBuffer;
         const birdRight = bird.x + bird.radius - this.hitboxBuffer;
         const birdTop = bird.y - bird.radius + this.hitboxBuffer;
@@ -87,7 +73,7 @@ export class Pipe {
     }
 
     checkPassed(bird) {
-        if (this.x + this.width / 2 < bird.x && !this.scored) {
+        if (this.x + (this.width / 2) < bird.x && !this.scored) {
             this.scored = true;
             if (this.soundController) {
                 this.soundController.playSound('score');

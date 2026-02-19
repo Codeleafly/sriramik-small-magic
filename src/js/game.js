@@ -8,58 +8,61 @@ export class Game {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
-        this.width = canvas.width;
-        this.height = canvas.height;
+        
+        // Logical Virtual Resolution (Base for all physics)
+        this.width = 0;
+        this.height = 0;
+        
         this.gameRunning = false;
         this.score = 0;
         this.frames = 0;
-        this.speed = 3.5;          // ~210px/sec at 60fps
-        this.highScore = parseInt(localStorage.getItem('flappyHighScore')) || 0;
         
-        // FPS Counter
+        // Stable Physics Constants
+        this.speed = 3.2;           // Horizontal movement speed
+        this.gravity = 0.35;        // Falling acceleration
+        this.jumpImpulse = -6.5;    // Upward force
+        
+        this.highScore = parseInt(localStorage.getItem('flapfingHighScore')) || 0;
+        this.medalCounts = JSON.parse(localStorage.getItem('flapfingMedalCounts')) || {
+            BRONZE: 0, SILVER: 0, GOLD: 0, PLATINUM: 0
+        };
+        
+        // FPS Monitoring
         this.fps = 0;
         this.lastTime = performance.now();
         this.frameCount = 0;
         this.fpsText = document.getElementById('fpsText');
 
-        this.medalCounts = JSON.parse(localStorage.getItem('flappyMedalCounts')) || {
-            BRONZE: 0,
-            SILVER: 0,
-            GOLD: 0,
-            PLATINUM: 0
-        };
-        
         this.audioController = new AudioController();
-        this.bird = new Bird(this, Assets.images.bird, this.audioController);
+        this.bird = null;
         this.pipes = [];
-        this.background = new Background(this, Assets.images.background, this.speed / 2); // Parallax speed
+        this.background = null;
         
         this.animationId = null;
 
-        // Resize handler
         window.addEventListener('resize', () => this.resize());
         this.resize();
+        
+        // Initialize Entities after first resize
+        this.bird = new Bird(this, Assets.images.bird, this.audioController);
+        this.background = new Background(this, Assets.images.background, this.speed / 2);
     }
 
     resize() {
-        // Set canvas dimensions to viewport size
         const width = window.innerWidth;
         const height = window.innerHeight;
-        
-        // Handle high DPI screens
         const dpr = window.devicePixelRatio || 1;
+        
         this.canvas.width = width * dpr;
         this.canvas.height = height * dpr;
         this.ctx.scale(dpr, dpr);
         
-        // Update logical dimensions
         this.width = width;
         this.height = height;
 
-        // Re-center bird if game not running
         if (!this.gameRunning && this.bird) {
-            this.bird.y = this.height / 2;
             this.bird.x = this.width / 3;
+            this.bird.y = this.height / 2;
         }
     }
 
@@ -71,22 +74,19 @@ export class Game {
         this.frames = 0;
         this.pipes = [];
         this.bird.reset();
-        this.bird.y = this.height / 2;
         this.audioController.playBackgroundMusic();
         
-        // Hide UI
         document.getElementById('startScreen').style.display = 'none';
         document.getElementById('gameOverScreen').style.display = 'none';
         document.getElementById('scoreBoard').innerText = '0';
         
-        this.bird.flap();
         this.loop();
     }
 
     loop() {
         if (!this.gameRunning) return;
 
-        // Calculate FPS
+        // FPS Calculation
         const now = performance.now();
         this.frameCount++;
         if (now >= this.lastTime + 1000) {
@@ -98,26 +98,20 @@ export class Game {
 
         this.ctx.clearRect(0, 0, this.width, this.height);
 
-        // Update Background
+        // 1. Background
         this.background.update();
         this.background.draw();
 
-        // Update Bird
+        // 2. Bird
         this.bird.update();
         this.bird.draw();
         
-        // Check for ground collision
-        if (this.bird.y + this.bird.height/2 >= this.height) {
-            this.gameOver();
-            return;
-        }
-
-        // Pipe Logic
-        // Start generating pipes after ~2.5 seconds (150 frames)
-        if (this.frames > 150 && this.frames % 90 === 0) {
+        // 3. Pipe Generation (Balanced Timing: ~2s delay, then every ~1.6s)
+        if (this.frames > 120 && this.frames % 100 === 0) {
             this.pipes.push(new Pipe(this, this.speed, this.audioController));
         }
 
+        // 4. Pipe Management
         for (let i = 0; i < this.pipes.length; i++) {
             let pipe = this.pipes[i];
             pipe.update();
@@ -133,10 +127,16 @@ export class Game {
                 document.getElementById('scoreBoard').innerText = this.score;
             }
 
-            if (pipe.x + pipe.width < 0) {
-                this.pipes.shift();
+            if (pipe.x + pipe.width < -50) {
+                this.pipes.splice(i, 1);
                 i--;
             }
+        }
+
+        // 5. Floor/Ceiling Collision
+        if (this.bird.y + this.bird.radius >= this.height || this.bird.y - this.bird.radius <= 0) {
+            this.gameOver();
+            return;
         }
 
         this.frames++;
@@ -155,59 +155,42 @@ export class Game {
         
         if (this.score > this.highScore) {
             this.highScore = this.score;
-            localStorage.setItem('flappyHighScore', this.highScore);
+            localStorage.setItem('flapfingHighScore', this.highScore);
         }
 
-        const finalScoreEl = document.getElementById('finalScore');
-        finalScoreEl.innerText = this.score;
-        
-        const bestScoreEl = document.getElementById('bestScore');
-        bestScoreEl.innerText = this.highScore;
+        document.getElementById('finalScore').innerText = this.score;
+        document.getElementById('bestScore').innerText = this.highScore;
 
         const medalEl = document.getElementById('medal');
         const medalNameEl = document.getElementById('medalName');
         const noMedalEl = document.getElementById('noMedalPlaceholder');
         
-        medalEl.style.display = 'none';
-        medalNameEl.innerText = '';
-        noMedalEl.style.display = 'block';
-
-        // Medal Logic: 5+ Bronze, 10+ Silver, 20+ Gold, 40+ Platinum
         const medalInfo = this.getMedalInfo(this.score);
         if (medalInfo) {
             medalEl.style.display = 'block';
             noMedalEl.style.display = 'none';
             medalEl.src = medalInfo.src;
             medalNameEl.innerText = medalInfo.name;
-
-            // Increment and save medal count
             this.medalCounts[medalInfo.name]++;
-            localStorage.setItem('flappyMedalCounts', JSON.stringify(this.medalCounts));
+            localStorage.setItem('flapfingMedalCounts', JSON.stringify(this.medalCounts));
+        } else {
+            medalEl.style.display = 'none';
+            noMedalEl.style.display = 'block';
+            medalNameEl.innerText = '';
         }
 
         document.getElementById('gameOverScreen').style.display = 'block';
     }
 
     getMedalInfo(score) {
-        if (score >= 40) {
-            return { name: 'PLATINUM', src: 'public/assets/medal_platinum.svg' };
-        } else if (score >= 20) {
-            return { name: 'GOLD', src: 'public/assets/medal_gold.svg' };
-        } else if (score >= 10) {
-            return { name: 'SILVER', src: 'public/assets/medal_silver.svg' };
-        } else if (score >= 5) {
-            return { name: 'BRONZE', src: 'public/assets/medal_bronze.svg' };
-        }
+        if (score >= 40) return { name: 'PLATINUM', src: 'public/assets/medal_platinum.svg' };
+        if (score >= 20) return { name: 'GOLD', src: 'public/assets/medal_gold.svg' };
+        if (score >= 10) return { name: 'SILVER', src: 'public/assets/medal_silver.svg' };
+        if (score >= 5)  return { name: 'BRONZE', src: 'public/assets/medal_bronze.svg' };
         return null;
     }
 
-    // Input handlers
     flap() {
-        if (this.gameRunning) {
-            this.bird.flap();
-        } else {
-            // Can be used to start game if on start screen?
-            // Handled by UI usually, but good to have.
-        }
+        if (this.gameRunning) this.bird.flap();
     }
 }
