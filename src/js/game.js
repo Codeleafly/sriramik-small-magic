@@ -96,8 +96,8 @@ export class Game {
         }
 
         // Pipe Logic
-        // Only start generating pipes after 200 frames (gives user time to settle)
-        if (this.frames > 200 && this.frames % 150 === 0) {
+        // Start generating pipes after 100 frames (gives user time to settle)
+        if (this.frames > 100 && this.frames % 120 === 0) {
             this.pipes.push(new Pipe(this, this.speed, this.audioController));
         }
 
