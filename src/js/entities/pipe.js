@@ -6,16 +6,29 @@ export class Pipe {
         this.soundController = soundController;
         this.x = game.width;
         
-        // Original game gap size (approx 105px)
-        this.gap = 105; 
+        // Difficulty Ramp: If score is less than 5, make pipes easier
+        const isEasyMode = this.game.score < 5;
         
-        // Define random vertical position (safe range for pipes)
+        // Original game gap size (~105px), slightly larger in easy mode (~120px)
+        this.gap = isEasyMode ? 125 : 105; 
+        
+        // Define vertical position
         const minPipeHeight = 80;
         const maxPipeHeight = game.height - this.gap - minPipeHeight;
-        this.topHeight = minPipeHeight + Math.random() * (maxPipeHeight - minPipeHeight);
+        
+        if (isEasyMode) {
+            // Center the gap with a small random jitter (+/- 30px) for first 5 pipes
+            const centerY = (game.height / 2) - (this.gap / 2);
+            const jitter = (Math.random() - 0.5) * 60;
+            this.topHeight = centerY + jitter;
+        } else {
+            // Full randomness for score >= 5
+            this.topHeight = minPipeHeight + Math.random() * (maxPipeHeight - minPipeHeight);
+        }
+        
         this.bottomY = this.topHeight + this.gap;
         
-        this.width = 52;           // Classic pipe width
+        this.width = 52;
         this.color = '#73bf2e';
         this.passed = false;
         this.scored = false;
