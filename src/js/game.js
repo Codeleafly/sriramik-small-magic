@@ -13,7 +13,7 @@ export class Game {
         this.gameRunning = false;
         this.score = 0;
         this.frames = 0;
-        this.speed = 2.5;
+        this.speed = 3.5;          // ~210px/sec at 60fps
         this.highScore = parseInt(localStorage.getItem('flappyHighScore')) || 0;
         
         // FPS Counter
@@ -113,8 +113,8 @@ export class Game {
         }
 
         // Pipe Logic
-        // Start generating pipes after ~10 seconds (600 frames at 60fps)
-        if (this.frames > 600 && this.frames % 120 === 0) {
+        // Start generating pipes after ~2.5 seconds (150 frames)
+        if (this.frames > 150 && this.frames % 80 === 0) {
             this.pipes.push(new Pipe(this, this.speed, this.audioController));
         }
 

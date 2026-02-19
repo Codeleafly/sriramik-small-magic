@@ -6,30 +6,46 @@ export class Pipe {
         this.soundController = soundController;
         this.x = game.width;
         
-        // Dynamic gap sizing and positioning
-        const gap = 180 + Math.random() * 60; // Slightly varying gap for interest
-        const minPipeHeight = 50;
-        this.topHeight = minPipeHeight + Math.random() * (game.height - gap - minPipeHeight * 2);
-        this.bottomY = this.topHeight + gap;
+        // Original game gap size (approx 105px)
+        this.gap = 105; 
         
-        this.width = 80;
+        // Define random vertical position (safe range for pipes)
+        const minPipeHeight = 80;
+        const maxPipeHeight = game.height - this.gap - minPipeHeight;
+        this.topHeight = minPipeHeight + Math.random() * (maxPipeHeight - minPipeHeight);
+        this.bottomY = this.topHeight + this.gap;
+        
+        this.width = 52;           // Classic pipe width
         this.color = '#73bf2e';
         this.passed = false;
         this.scored = false;
+        
+        // Forgiving hitbox buffer
+        this.hitboxBuffer = 5;
     }
 
     draw() {
         this.ctx.fillStyle = this.color;
-        this.ctx.strokeStyle = '#558c22';
-        this.ctx.lineWidth = 3;
+        this.ctx.strokeStyle = '#2d4d12';
+        this.ctx.lineWidth = 2;
 
-        // Top Pipe
+        // Draw Top Pipe
         this.ctx.fillRect(this.x, 0, this.width, this.topHeight);
         this.ctx.strokeRect(this.x, 0, this.width, this.topHeight);
         
-        // Bottom Pipe
+        // Draw Top Pipe Cap
+        const capWidth = this.width + 6;
+        const capHeight = 24;
+        this.ctx.fillRect(this.x - 3, this.topHeight - capHeight, capWidth, capHeight);
+        this.ctx.strokeRect(this.x - 3, this.topHeight - capHeight, capWidth, capHeight);
+
+        // Draw Bottom Pipe
         this.ctx.fillRect(this.x, this.bottomY, this.width, this.game.height - this.bottomY);
         this.ctx.strokeRect(this.x, this.bottomY, this.width, this.game.height - this.bottomY);
+        
+        // Draw Bottom Pipe Cap
+        this.ctx.fillRect(this.x - 3, this.bottomY, capWidth, capHeight);
+        this.ctx.strokeRect(this.x - 3, this.bottomY, capWidth, capHeight);
     }
 
     update() {
@@ -40,8 +56,17 @@ export class Pipe {
     }
 
     checkCollision(bird) {
-        if (bird.x + bird.width/2 > this.x && bird.x - bird.width/2 < this.x + this.width) {
-            if (bird.y - bird.height/2 < this.topHeight || bird.y + bird.height/2 > this.bottomY) {
+        // More forgiving collision detection using a slightly reduced bird hitbox
+        const birdLeft = bird.x - bird.radius + this.hitboxBuffer;
+        const birdRight = bird.x + bird.radius - this.hitboxBuffer;
+        const birdTop = bird.y - bird.radius + this.hitboxBuffer;
+        const birdBottom = bird.y + bird.radius - this.hitboxBuffer;
+
+        const pipeLeft = this.x;
+        const pipeRight = this.x + this.width;
+
+        if (birdRight > pipeLeft && birdLeft < pipeRight) {
+            if (birdTop < this.topHeight || birdBottom > this.bottomY) {
                 return true;
             }
         }
@@ -49,7 +74,7 @@ export class Pipe {
     }
 
     checkPassed(bird) {
-        if (this.x + this.width < bird.x && !this.scored) {
+        if (this.x + this.width / 2 < bird.x && !this.scored) {
             this.scored = true;
             if (this.soundController) {
                 this.soundController.playSound('score');
