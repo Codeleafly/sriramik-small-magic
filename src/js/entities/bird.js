@@ -11,9 +11,9 @@ export class Bird {
         this.gravity = 0.4;        // ~1440 px/sec^2
         this.jumpStrength = -7;    // ~420 px/sec
         
-        this.width = 44;           // Closer to original size
-        this.height = 34;
-        this.radius = 12;          // Forgiving hitbox radius
+        this.width = 65;           // Restored to previous size
+        this.height = 50;
+        this.radius = 22;          // Restored to a larger forgiving hitbox
         
         this.rotation = 0;
         this.image = image;
