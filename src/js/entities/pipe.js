@@ -11,11 +11,11 @@ export class Pipe {
         this.width = 52;
         this.hitboxBuffer = 5;
         
-        // Adaptive height calculation
-        const minPipeHeight = 80;
-        const maxPipeHeight = game.height - this.gapSize - minPipeHeight;
+        // Playable height calculation: Keep gaps in a reachable vertical zone
+        const minTop = game.height * 0.15; // Gap won't be too high
+        const maxTop = game.height * 0.60; // Gap won't be too low
         
-        this.topHeight = minPipeHeight + Math.random() * (maxPipeHeight - minPipeHeight);
+        this.topHeight = minTop + Math.random() * (maxTop - minTop);
         this.bottomY = this.topHeight + this.gapSize;
         
         this.color = '#73bf2e';
