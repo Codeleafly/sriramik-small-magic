@@ -3,6 +3,8 @@ import { Pipe } from './entities/pipe.js';
 import { Background } from './entities/background.js';
 import { Assets } from './assets.js';
 import { AudioController } from './audio.js';
+import { Auth } from './services/auth.js';
+import { Database } from './services/db.js';
 
 export class Game {
     constructor(canvas) {
@@ -17,10 +19,10 @@ export class Game {
         this.score = 0;
         this.frames = 0;
         
-        // Stable Physics Constants
-        this.speed = 3.2;           // Horizontal movement speed
-        this.gravity = 0.35;        // Falling acceleration
-        this.jumpImpulse = -6.5;    // Upward force
+        // Snappier Physics Constants
+        this.speed = 4.5;           // Keep fast pace
+        this.gravity = 0.42;        // Slightly lower gravity for smoother fall
+        this.jumpImpulse = -6.8;    // Balanced jump (not too high)
         
         this.highScore = parseInt(localStorage.getItem('flapfingHighScore')) || 0;
         this.medalCounts = JSON.parse(localStorage.getItem('flapfingMedalCounts')) || {
@@ -59,6 +61,14 @@ export class Game {
         
         this.width = width;
         this.height = height;
+
+        // Dynamic Scaling for Bird/Pipes based on height
+        const scaleFactor = Math.min(1, height / 800);
+        if (this.bird) {
+            this.bird.width = 65 * scaleFactor;
+            this.bird.height = 50 * scaleFactor;
+            this.bird.radius = 22 * scaleFactor;
+        }
 
         if (!this.gameRunning && this.bird) {
             this.bird.x = this.width / 3;
@@ -106,8 +116,8 @@ export class Game {
         this.bird.update();
         this.bird.draw();
         
-        // 3. Pipe Generation (Balanced Timing: ~2s delay, then every ~1.6s)
-        if (this.frames > 120 && this.frames % 100 === 0) {
+        // 3. Pipe Generation (Fast Pacing: Spawns every ~0.9s)
+        if (this.frames > 60 && this.frames % 55 === 0) {
             this.pipes.push(new Pipe(this, this.speed, this.audioController));
         }
 
@@ -153,9 +163,17 @@ export class Game {
         this.stop();
         this.audioController.playSound('die');
         
+        const oldHighScore = this.highScore;
         if (this.score > this.highScore) {
             this.highScore = this.score;
             localStorage.setItem('flapfingHighScore', this.highScore);
+        }
+
+        // Save high score to Firestore if user is logged in
+        // The Database service handles checking if the new score is better than the existing cloud score
+        if (Auth.user && this.score > 0) {
+            console.log("Game Over: Attempting to save score", this.score);
+            Database.saveHighScore(Auth.user, this.score);
         }
 
         document.getElementById('finalScore').innerText = this.score;

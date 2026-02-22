@@ -7,9 +7,10 @@ export class Pipe {
         this.x = game.width;
         
         // Stabilized Difficulty: Balanced gap and random ranges
-        this.gapSize = 120;
-        this.width = 52;
-        this.hitboxBuffer = 5;
+        const scale = Math.min(1, game.height / 800);
+        this.gapSize = 120 * scale;
+        this.width = 52 * scale;
+        this.hitboxBuffer = 5 * scale;
         
         // Playable height calculation: Keep gaps in a reachable vertical zone
         const minTop = game.height * 0.15; // Gap won't be too high

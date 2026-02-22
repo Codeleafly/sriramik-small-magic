@@ -1,0 +1,17 @@
+{
+  "name": "Flapfing - AI Gesture Bird Game",
+  "short_name": "Flapfing",
+  "description": "Play Flapfing, the official AI-powered bird adventure controlled by hand gestures!",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#70c5ce",
+  "theme_color": "#70c5ce",
+  "icons": [
+    {
+      "src": "public/assets/bird.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 import { Game } from './game.js';
 import { Assets } from './assets.js';
+import { Auth } from './services/auth.js';
+import { Database } from './services/db.js';
 
 // --- GLOBAL VARIABLES ---
 let game;
@@ -7,54 +9,150 @@ let isCameraReady = false;
 let isPinching = false;
 let lastActionTime = 0;
 let lastStartTrigger = 0;
+let currentUser = null;
+let deferredPrompt;
+let leaderboardUnsubscribe = null;
 
 // --- DOM ELEMENTS ---
+const loadingOverlay = document.getElementById('loadingOverlay');
 const startScreen = document.getElementById('startScreen');
 const gameOverScreen = document.getElementById('gameOverScreen');
+
+// Auth UI Elements
+const logoutBtn = document.getElementById('logoutBtn');
+
+// Game UI Elements
 const startBtn = document.getElementById('startBtn');
+const installBtn = document.getElementById('installBtn');
 const enableCameraBtn = document.getElementById('enableCameraBtn');
 const cameraBox = document.getElementById('cameraBox');
 const cameraLoader = document.getElementById('cameraLoader');
 const statusText = document.getElementById('statusText');
 const gestureHint = document.getElementById('gestureHint');
-const loadingOverlay = document.getElementById('loadingOverlay');
 
 // --- INITIALIZATION ---
 async function init() {
-    try {
-        await Assets.load();
-        console.log("Assets loaded");
-    } catch (e) {
-        console.error("Asset load error", e);
+    // Safety Timeout: Hide loading overlay if it takes too long (10 seconds)
+    const safetyTimeout = setTimeout(() => {
+        if (loadingOverlay && loadingOverlay.style.display !== 'none') {
+            console.warn("Loading taking too long, forcing overlay hide.");
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => loadingOverlay.style.display = 'none', 500);
+        }
+    }, 10000);
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW Registered'))
+                .catch(err => console.log('SW Registration Failed', err));
+        });
     }
 
-    const canvas = document.getElementById('gameCanvas');
-    game = new Game(canvas);
+    // Handle PWA Install Prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (currentUser && installBtn) installBtn.style.display = 'block';
+    });
 
-    // Initial Resize
-    game.resize();
-    updateHomeMedal();
+    if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installBtn.style.display = 'none';
+            }
+        });
+    }
 
-    // Event Listeners
-    startBtn.addEventListener('click', startGame);
-    enableCameraBtn.addEventListener('click', enableCamera);
+    // Initialize Auth State Listener FIRST
+    Auth.onAuthStateChanged(async (user) => {
+        currentUser = user;
+        
+        try {
+            if (user) {
+                // User is logged in
+                console.log("User logged in:", user.email);
+                
+                // Show install button if prompt is available
+                if (deferredPrompt && installBtn) installBtn.style.display = 'block';
+
+                // Load Game Assets and Game Instance
+                await Assets.load();
+                
+                if (!game) {
+                    const canvas = document.getElementById('gameCanvas');
+                    game = new Game(canvas);
+                }
+                
+                game.resize();
+                updateHomeMedal();
+                
+                // Show Start Screen
+                startScreen.style.display = 'block';
+                
+                // Hide overlay
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+                    clearTimeout(safetyTimeout);
+                }, 500);
+
+                // Add listeners ONLY ONCE
+                setupAuthenticatedListeners();
+
+            } else {
+                // User is logged out, redirect to login page
+                console.log("User logged out, redirecting...");
+                window.location.href = 'login.html';
+            }
+        } catch (error) {
+            console.error("Initialization error:", error);
+            // Hide overlay even on error so user isn't stuck
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            clearTimeout(safetyTimeout);
+        }
+    });
     
-    // Retry Button (in Game Over Screen)
-    const retryBtn = gameOverScreen.querySelector('button');
-    if (retryBtn) retryBtn.addEventListener('click', resetGame);
+    // Initial Resize
+    window.addEventListener('resize', () => {
+        if (game) game.resize();
+    });
 
-    // Hide loading overlay when scripts are ready (simulated for now as we don't have dynamic script loading here yet)
-    // In a real module system, this script runs after everything is loaded.
-    setTimeout(() => {
-        loadingOverlay.style.opacity = '0';
-        setTimeout(() => {
-            loadingOverlay.style.display = 'none';
-            startScreen.style.display = 'block';
-        }, 500);
-    }, 1000);
+    // Debugging Tool: Allow manual score testing
+    window.saveTestScore = (score) => {
+        if (currentUser) {
+            console.log("Saving test score:", score);
+            Database.saveHighScore(currentUser, score);
+        } else {
+            console.warn("User not logged in!");
+        }
+    };
 }
 
+function setupAuthenticatedListeners() {
+    // We use a flag to prevent multiple attachments
+    if (window._listenersAttached) return;
+    window._listenersAttached = true;
+
+    if (startBtn) startBtn.addEventListener('click', startGame);
+    if (enableCameraBtn) enableCameraBtn.addEventListener('click', enableCamera);
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+
+    const retryBtn = document.getElementById('retryBtn');
+    if (retryBtn) retryBtn.addEventListener('click', resetGame);
+}
+
+// --- Game Screen Functions ---
 function startGame() {
+    if (!currentUser) {
+        console.error("Cannot start game, user not logged in.");
+        return;
+    }
     if (game.gameRunning) return;
     
     // Resume audio context
@@ -68,19 +166,26 @@ function startGame() {
 }
 
 function resetGame() {
-    updateHomeMedal();
+    if (!currentUser) return;
+    updateHomeMedal(); // Update medals based on saved high score
     startGame();
 }
 
+async function handleLogout() {
+    await Auth.logout();
+}
+
+// Update Home Screen Medal Display based on user's highest score
 function updateHomeMedal() {
-    if (!game) return;
-    const highScore = game.highScore;
+    if (!game || !currentUser) return;
+    
+    const highScore = game.highScore; 
     const homeRecord = document.getElementById('homeBestRecord');
     const homeScore = document.getElementById('homeBestScore');
     const homeMedalIcon = document.getElementById('homeBestMedalIcon');
     const homeMedalName = document.getElementById('homeBestMedalName');
 
-    // Update individual counts
+    // Update individual medal counts
     for (const [medal, count] of Object.entries(game.medalCounts)) {
         const el = document.getElementById(`count-${medal}`);
         if (el) el.innerText = count;
@@ -93,6 +198,10 @@ function updateHomeMedal() {
         if (medalInfo) {
             homeMedalIcon.src = medalInfo.src;
             homeMedalName.innerText = medalInfo.name + " MEDAL";
+            homeMedalIcon.style.display = 'block';
+        } else {
+            homeMedalIcon.style.display = 'none';
+            homeMedalName.innerText = "NO MEDAL YET";
         }
     } else if (highScore > 0) {
         homeRecord.style.display = 'block';
@@ -104,15 +213,22 @@ function updateHomeMedal() {
     }
 }
 
-// --- MEDIAPIPE SETUP ---
+
+// --- Mediapipe Setup ---
+let firstFrameDetected = false;
+const outputCanvas = document.getElementById('output_canvas');
+const outputCtx = outputCanvas.getContext('2d');
+
 async function enableCamera() {
-    // Resume audio context on user interaction
+    if (!currentUser) return;
+
+    // Resume audio context
     if (game && game.audioController) {
         game.audioController.ctx.resume();
     }
     
     enableCameraBtn.disabled = true;
-    enableCameraBtn.innerHTML = 'Starting <div class="spinner"></div>';
+    enableCameraBtn.innerHTML = 'Starting <div class="spinner camera-spinner"></div>';
     statusText.innerText = "Requesting Camera...";
     
     cameraBox.style.display = 'block';
@@ -125,9 +241,9 @@ async function enableCamera() {
 
         hands.setOptions({
             maxNumHands: 1,
-            modelComplexity: 1,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
+            modelComplexity: 0, // 0 for maximum speed/low latency
+            minDetectionConfidence: 0.4, // Slightly lower for faster detection
+            minTrackingConfidence: 0.4
         });
 
         hands.onResults(onResults);
@@ -138,7 +254,8 @@ async function enableCamera() {
                 await hands.send({image: videoElement});
             },
             width: 320,
-            height: 240
+            height: 240,
+            facingMode: 'user'
         });
 
         await camera.start();
@@ -154,10 +271,6 @@ async function enableCamera() {
         enableCameraBtn.disabled = false;
     }
 }
-
-let firstFrameDetected = false;
-const outputCanvas = document.getElementById('output_canvas');
-const outputCtx = outputCanvas.getContext('2d');
 
 function onResults(results) {
     if (!firstFrameDetected) {
@@ -184,7 +297,7 @@ function onResults(results) {
         const indexTip = landmarks[8];
         const thumbTip = landmarks[4];
         const distance = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
-        const pinchThreshold = 0.05;
+        const pinchThreshold = 0.12; // Much more sensitive for faster detection
 
         if (distance < pinchThreshold) {
             outputCtx.beginPath();
@@ -195,11 +308,11 @@ function onResults(results) {
             if (!isPinching) {
                 isPinching = true; 
                 const now = Date.now();
-                if (now - lastActionTime > 150) { 
-                    if (game.gameRunning) {
+                if (now - lastActionTime > 40) { // Minimum debounce for instant response
+                    if (game && game.gameRunning) {
                         game.bird.flap();
                         lastActionTime = now;
-                    } else if (isCameraReady) {
+                    } else if (isCameraReady && !game.gameRunning) {
                         if (now - lastStartTrigger > 1000) {
                             startGame();
                             lastStartTrigger = now;

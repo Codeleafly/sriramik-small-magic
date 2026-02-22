@@ -18,6 +18,14 @@
     <meta name="rating" content="general">
     <link rel="canonical" href="https://sriramiks-small-magic.netlify.app/">
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#70c5ce">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Flapfing">
+    <link rel="apple-touch-icon" href="public/assets/bird.svg">
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://sriramiks-small-magic.netlify.app/">
@@ -157,6 +165,18 @@
         <button id="startBtn" class="btn" style="display: none;">
             START GAME
         </button>
+
+        <a href="leaderboard.html" class="btn btn-secondary" style="margin-top: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+            LEADERBOARD
+        </a>
+        
+        <button id="logoutBtn" class="btn" style="margin-top: 10px; background: #95a5a6; box-shadow: 0 5px 0 #7f8c8d;">
+            LOGOUT
+        </button>
+
+        <button id="installBtn" class="btn" style="margin-top: 10px; display: none;">
+            INSTALL APP
+        </button>
         
         <p id="gestureHint" class="mt-4 text-xs text-green-800 font-bold animate-pulse" style="display: none;">
             or PINCH to START!
@@ -188,6 +208,7 @@
         </div>
 
         <button id="retryBtn" class="btn">RETRY</button>
+        <a href="leaderboard.html" class="btn btn-secondary" style="margin-top: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center;">LEADERBOARD</a>
         <p class="mt-4 text-xs text-green-800 font-bold animate-pulse">
             or PINCH to RETRY!
         </p>
