@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flapfing-v7';
+const CACHE_NAME = 'flapfing-static-cache';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -21,20 +21,9 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Clear old caches to ensure fresh data
+// Simplified activate: Just take control immediately
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log("ServiceWorker: Clearing old cache:", cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
+  event.waitUntil(clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {

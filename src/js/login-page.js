@@ -1,5 +1,6 @@
 import { Auth } from './services/auth.js';
 import { Database } from './services/db.js';
+import { clearAllCookies } from './utils/storage-cleaner.js';
 
 // Helper to convert file to base64 with downscaling
 function imageToLowResBase64(file) {
@@ -60,6 +61,7 @@ const emailSignupBtn = document.getElementById('emailSignupBtn');
 let isProcessingAuth = false;
 
 async function init() {
+    clearAllCookies();
     Auth.onAuthStateChanged((user) => {
         if (user && !isProcessingAuth) {
             window.location.href = 'index.html';
@@ -96,6 +98,7 @@ async function init() {
             loginError.innerText = result.message;
             isProcessingAuth = false;
         } else {
+            Auth.setLoginSession();
             window.location.href = 'index.html';
         }
     });
@@ -105,6 +108,7 @@ async function init() {
         isProcessingAuth = true;
         const result = await Auth.loginWithGoogle();
         if (result.success) {
+            Auth.setLoginSession();
             // Save/Update profile from Google automatically
             await Database.saveUserProfile(result.user, result.user.displayName, result.user.photoURL);
             window.location.href = 'index.html';
@@ -149,6 +153,7 @@ async function init() {
         const result = await Auth.registerWithEmail(email, password, name);
         
         if (result.success) {
+            Auth.setLoginSession();
             // Save initial profile data to RTDB (Base64 or null)
             await Database.saveUserProfile(result.user, name, photoBase64);
             signupError.innerText = 'Success! Redirecting...';

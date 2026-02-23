@@ -1,4 +1,4 @@
-console.log("Assets System: Initializing v5");
+console.log("Assets System: Initializing");
 
 export const getMedalInfo = (score) => {
     if (score >= 40) return { name: 'PLATINUM', src: 'public/assets/medal_platinum.svg' };
@@ -47,15 +47,8 @@ export const Assets = {
         this.sounds.background.loop = true;
         this.sounds.background.volume = 0.8;
         
-        // Use allSettled to prevent one missing file from breaking the whole game
-        const results = await Promise.allSettled(promises);
-        results.forEach((result, i) => {
-            if (result.status === 'rejected') {
-                console.warn(`Assets System: Failed to load ${assetsToLoad[i].name}`, result.reason);
-            }
-        });
-        
-        console.log("Assets System: Loading Complete (or partially complete)");
+        await Promise.allSettled(promises);
+        console.log("Assets System: Loading Complete");
         return true;
     },
 

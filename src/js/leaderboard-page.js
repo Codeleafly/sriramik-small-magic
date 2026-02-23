@@ -1,6 +1,7 @@
 import { Database } from './services/db.js';
 import { Auth } from './services/auth.js';
 import { getMedalInfo } from './assets.js';
+import { clearAllCookies } from './utils/storage-cleaner.js';
 
 const leaderboardList = document.getElementById('leaderboardList');
 const loadMoreBtn = document.getElementById('loadMoreBtn');
@@ -8,6 +9,7 @@ let currentLimit = 50;
 let isLoading = false;
 
 async function init() {
+    clearAllCookies();
     console.log("Leaderboard: Initializing...");
     
     // Initial load
@@ -115,5 +117,4 @@ function renderScores(scores, clear) {
     });
 }
 
-// Start
 init();

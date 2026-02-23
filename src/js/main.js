@@ -2,6 +2,7 @@ import { Game } from './game.js';
 import { Assets, getMedalInfo } from './assets.js';
 import { Auth } from './services/auth.js';
 import { Database } from './services/db.js';
+import { clearAllCookies } from './utils/storage-cleaner.js';
 
 // --- GLOBAL VARIABLES ---
 let game;
@@ -56,6 +57,7 @@ function showUI(screenId) {
 // --- INITIALIZATION ---
 async function init() {
     console.log("App: Initializing...");
+    clearAllCookies();
     
     // ONE-TIME MIGRATION: Clear old localStorage high scores to force DB sync
     if (localStorage.getItem('flapfingHighScore') || localStorage.getItem('flapfingMedalCounts')) {
@@ -107,6 +109,15 @@ async function init() {
         
         if (!user) {
             console.log("App: User logged out, redirecting to login...");
+            window.location.href = 'login.html';
+            return;
+        }
+
+        // Check for Session Expiry (5 days)
+        if (Auth.isSessionExpired()) {
+            console.log("App: Session expired (5 days limit), logging out...");
+            localStorage.removeItem('flapfingLoginTime');
+            await Auth.logout();
             window.location.href = 'login.html';
             return;
         }

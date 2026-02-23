@@ -99,16 +99,14 @@ export const Database = {
                         scores.push({ id: childSnapshot.key, ...data });
                     }
                 });
-                // Sort descending by score
                 scores.sort((a, b) => b.score - a.score);
             }
-            // Return only the requested number of scores
             const limitedScores = scores.slice(0, limitCount);
             console.log(`DB: Fetched ${limitedScores.length} scores.`);
             return { scores: limitedScores };
         } catch (e) {
             console.error("DB: Error getting top scores:", e);
-            return { scores: [] }; // Return empty instead of throwing to prevent UI hang
+            return { scores: [] };
         }
     }
 };

@@ -63,5 +63,20 @@ export const Auth = {
             Auth.user = user;
             callback(user);
         });
+    },
+
+    // Session Expiry Logic (5 days)
+    setLoginSession: () => {
+        localStorage.setItem('flapfingLoginTime', Date.now().toString());
+    },
+
+    isSessionExpired: () => {
+        const loginTime = localStorage.getItem('flapfingLoginTime');
+        if (!loginTime) return false; // If not set, we don't force logout yet (or we could)
+        
+        const fiveDaysInMs = 5 * 24 * 60 * 60 * 1000;
+        const currentTime = Date.now();
+        
+        return (currentTime - parseInt(loginTime)) > fiveDaysInMs;
     }
 };

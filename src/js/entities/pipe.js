@@ -6,9 +6,9 @@ export class Pipe {
         this.soundController = soundController;
         this.x = game.width;
         
-        // Stabilized Difficulty: Balanced gap and random ranges
+        // Stabilized Difficulty: Increased gap for easier navigation
         const scale = Math.min(1, game.height / 800);
-        this.gapSize = 120 * scale;
+        this.gapSize = 160 * scale; // Increased from 120
         this.width = 52 * scale;
         this.hitboxBuffer = 5 * scale;
         

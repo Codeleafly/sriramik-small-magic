@@ -21,8 +21,8 @@ export class Game {
         
         // Snappier Physics Constants
         this.speed = 4.5;           // Keep fast pace
-        this.gravity = 0.42;        // Slightly lower gravity for smoother fall
-        this.jumpImpulse = -6.8;    // Balanced jump (not too high)
+        this.gravity = 0.38;        // Reduced from 0.42 for easier control
+        this.jumpImpulse = -6.5;    // Balanced jump (slightly reduced)
         
         this.highScore = 0; // Fetched from Database on init
         this.medalCounts = {
@@ -116,8 +116,8 @@ export class Game {
         this.bird.update();
         this.bird.draw();
         
-        // 3. Pipe Generation (Fast Pacing: Spawns every ~0.9s)
-        if (this.frames > 60 && this.frames % 55 === 0) {
+        // 3. Pipe Generation (Improved Experience: Spawns earlier but more space between)
+        if (this.frames > 30 && this.frames % 70 === 0) {
             this.pipes.push(new Pipe(this, this.speed, this.audioController));
         }
 
