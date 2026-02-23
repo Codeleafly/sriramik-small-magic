@@ -44,32 +44,63 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Flapfing",
-      "operatingSystem": "Web Browser",
-      "applicationCategory": "GameApplication",
-      "author": {
-        "@type": "Person",
-        "name": "Sriramik Sanjiv Sahu",
-        "memberOf": {
-          "@type": "Organization",
-          "name": "The Silent Zone"
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "Flapfing - AI Gesture Game",
+          "url": "https://sriramiks-small-magic.netlify.app/",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://sriramiks-small-magic.netlify.app/?s={search_term_string}",
+            "query-input": "required name=search_term_string"
+          },
+          "hasPart": [
+            {
+              "@type": "SiteNavigationElement",
+              "name": "Play Game",
+              "url": "https://sriramiks-small-magic.netlify.app/"
+            },
+            {
+              "@type": "SiteNavigationElement",
+              "name": "Login",
+              "url": "https://sriramiks-small-magic.netlify.app/login.html"
+            },
+            {
+              "@type": "SiteNavigationElement",
+              "name": "Leaderboard",
+              "url": "https://sriramiks-small-magic.netlify.app/leaderboard.html"
+            }
+          ]
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Flapfing",
+          "operatingSystem": "Web Browser",
+          "applicationCategory": "GameApplication",
+          "author": {
+            "@type": "Person",
+            "name": "Sriramik Sanjiv Sahu",
+            "memberOf": {
+              "@type": "Organization",
+              "name": "The Silent Zone"
+            }
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "The Silent Zone"
+          },
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "150"
+          },
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
         }
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "The Silent Zone"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.8",
-        "ratingCount": "150"
-      },
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      }
+      ]
     }
     </script>
 
