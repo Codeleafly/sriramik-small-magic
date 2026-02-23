@@ -11,7 +11,7 @@ import {
 import { db } from "../firebase-config.js";
 
 export const Database = {
-    async saveUserProfile(user, displayName, photoBase64 = null) {
+    async saveUserProfile(user, displayName, photoURL = null) {
         if (!user || !user.uid) return;
         console.log("DB: Saving User Profile...");
         const scoreRef = ref(db, `scores/${user.uid}`);
@@ -21,8 +21,8 @@ export const Database = {
                 displayName: displayName || user.displayName || 'Anonymous',
                 timestamp: Date.now()
             };
-            if (photoBase64) {
-                data.photoURL = photoBase64;
+            if (photoURL) {
+                data.photoURL = photoURL;
             } else if (user.photoURL) {
                 data.photoURL = user.photoURL;
             }
