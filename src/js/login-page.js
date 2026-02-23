@@ -1,4 +1,42 @@
 import { Auth } from './services/auth.js';
+import { Database } from './services/db.js';
+
+// Helper to convert file to base64 with downscaling
+function imageToLowResBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_SIZE = 128; // Keep it small for RTDB performance
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_SIZE) {
+                        height *= MAX_SIZE / width;
+                        width = MAX_SIZE;
+                    }
+                } else {
+                    if (height > MAX_SIZE) {
+                        width *= MAX_SIZE / height;
+                        height = MAX_SIZE;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compressed JPEG
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
 
 // DOM Elements
 const loginForm = document.getElementById('loginForm');
@@ -14,12 +52,16 @@ const googleLoginBtn = document.getElementById('googleLoginBtn');
 
 const signupEmail = document.getElementById('signupEmail');
 const signupPassword = document.getElementById('signupPassword');
+const signupName = document.getElementById('signupName');
+const signupPhoto = document.getElementById('signupPhoto');
 const signupError = document.getElementById('signupError');
 const emailSignupBtn = document.getElementById('emailSignupBtn');
 
+let isProcessingAuth = false;
+
 async function init() {
     Auth.onAuthStateChanged((user) => {
-        if (user) {
+        if (user && !isProcessingAuth) {
             window.location.href = 'index.html';
         }
     });
@@ -48,28 +90,40 @@ async function init() {
             return;
         }
         
+        isProcessingAuth = true;
         const result = await Auth.loginWithEmail(email, password);
         if (!result.success) {
             loginError.innerText = result.message;
+            isProcessingAuth = false;
+        } else {
+            window.location.href = 'index.html';
         }
     });
 
     googleLoginBtn.addEventListener('click', async () => {
         loginError.innerText = '';
+        isProcessingAuth = true;
         const result = await Auth.loginWithGoogle();
-        if (!result.success) {
+        if (result.success) {
+            // Save/Update profile from Google automatically
+            await Database.saveUserProfile(result.user, result.user.displayName, result.user.photoURL);
+            window.location.href = 'index.html';
+        } else {
             loginError.innerText = result.message;
+            isProcessingAuth = false;
         }
     });
 
     // Signup logic
     emailSignupBtn.addEventListener('click', async () => {
+        const name = signupName.value;
         const email = signupEmail.value;
         const password = signupPassword.value;
+        const photo = signupPhoto.files[0];
         signupError.innerText = '';
         
-        if (!email || !password) {
-            signupError.innerText = 'Please enter credentials.';
+        if (!name || !email || !password) {
+            signupError.innerText = 'Please enter all fields.';
             return;
         }
 
@@ -78,11 +132,34 @@ async function init() {
             return;
         }
 
-        const result = await Auth.registerWithEmail(email, password);
-        if (!result.success) {
-            signupError.innerText = result.message;
+        isProcessingAuth = true;
+        emailSignupBtn.innerText = "CREATING...";
+        emailSignupBtn.disabled = true;
+
+        // Photo processing (Downscaled)
+        let photoBase64 = null;
+        if (photo) {
+            try {
+                photoBase64 = await imageToLowResBase64(photo);
+            } catch (err) {
+                console.error("Photo process error:", err);
+            }
+        }
+
+        const result = await Auth.registerWithEmail(email, password, name);
+        
+        if (result.success) {
+            // Save initial profile data to RTDB (Base64 or null)
+            await Database.saveUserProfile(result.user, name, photoBase64);
+            signupError.innerText = 'Success! Redirecting...';
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
         } else {
-            signupError.innerText = 'Success! Check email for verification.';
+            signupError.innerText = result.message;
+            isProcessingAuth = false;
+            emailSignupBtn.innerText = "CREATE ACCOUNT";
+            emailSignupBtn.disabled = false;
         }
     });
 }

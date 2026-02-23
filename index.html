@@ -119,6 +119,9 @@
     <!-- Start Screen -->
     <main id="startScreen" class="wood-panel">
         <h1 class="flapfing-title">FLAPFING</h1>
+        
+        <p id="userGreeting" style="font-family: 'Press Start 2P'; font-size: 8px; color: #5D4037; margin-bottom: 15px; display: none;">WELCOME, <span id="userName" style="color: #E86A17;">PLAYER</span></p>
+
         <img id="homeBird" src="public/assets/bird.svg" alt="Animated Bird Mascot flying in place">
         
         <!-- Best Record Section -->
@@ -129,29 +132,6 @@
                 <div style="text-align: left;">
                     <p id="homeBestMedalName" style="font-family: 'Press Start 2P'; font-size: 8px; color: #E86A17; margin: 0;"></p>
                     <p style="font-family: 'Press Start 2P'; font-size: 10px; color: #3E2723; margin: 2px 0 0 0;">BEST: <span id="homeBestScore">0</span></p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Medals Collection Section -->
-        <section id="medalsCollection" style="margin-bottom: 20px; padding: 10px; background: rgba(255,255,255,0.3); border-radius: 10px; border: 2px dashed #8B4513;">
-            <p style="font-size: 10px; color: #5D4037; font-weight: bold; margin-bottom: 10px;">MEDALS COLLECTION</p>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
-                <div class="medal-badge">
-                    <img src="public/assets/medal_platinum.svg" alt="Platinum Medal: Scored over 40 points">
-                    <span id="count-PLATINUM">0</span>
-                </div>
-                <div class="medal-badge">
-                    <img src="public/assets/medal_gold.svg" alt="Gold Medal: Scored over 20 points">
-                    <span id="count-GOLD">0</span>
-                </div>
-                <div class="medal-badge">
-                    <img src="public/assets/medal_silver.svg" alt="Silver Medal: Scored over 10 points">
-                    <span id="count-SILVER">0</span>
-                </div>
-                <div class="medal-badge">
-                    <img src="public/assets/medal_bronze.svg" alt="Bronze Medal: Scored over 5 points">
-                    <span id="count-BRONZE">0</span>
                 </div>
             </div>
         </section>

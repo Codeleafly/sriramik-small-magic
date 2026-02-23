@@ -1,7 +1,7 @@
 import { Bird } from './entities/bird.js';
 import { Pipe } from './entities/pipe.js';
 import { Background } from './entities/background.js';
-import { Assets } from './assets.js';
+import { Assets, getMedalInfo } from './assets.js';
 import { AudioController } from './audio.js';
 import { Auth } from './services/auth.js';
 import { Database } from './services/db.js';
@@ -24,8 +24,8 @@ export class Game {
         this.gravity = 0.42;        // Slightly lower gravity for smoother fall
         this.jumpImpulse = -6.8;    // Balanced jump (not too high)
         
-        this.highScore = parseInt(localStorage.getItem('flapfingHighScore')) || 0;
-        this.medalCounts = JSON.parse(localStorage.getItem('flapfingMedalCounts')) || {
+        this.highScore = 0; // Fetched from Database on init
+        this.medalCounts = {
             BRONZE: 0, SILVER: 0, GOLD: 0, PLATINUM: 0
         };
         
@@ -163,14 +163,11 @@ export class Game {
         this.stop();
         this.audioController.playSound('die');
         
-        const oldHighScore = this.highScore;
         if (this.score > this.highScore) {
             this.highScore = this.score;
-            localStorage.setItem('flapfingHighScore', this.highScore);
         }
 
         // Save high score to Firestore if user is logged in
-        // The Database service handles checking if the new score is better than the existing cloud score
         if (Auth.user && this.score > 0) {
             console.log("Game Over: Attempting to save score", this.score);
             Database.saveHighScore(Auth.user, this.score);
@@ -183,14 +180,12 @@ export class Game {
         const medalNameEl = document.getElementById('medalName');
         const noMedalEl = document.getElementById('noMedalPlaceholder');
         
-        const medalInfo = this.getMedalInfo(this.score);
+        const medalInfo = getMedalInfo(this.score);
         if (medalInfo) {
             medalEl.style.display = 'block';
             noMedalEl.style.display = 'none';
             medalEl.src = medalInfo.src;
             medalNameEl.innerText = medalInfo.name;
-            this.medalCounts[medalInfo.name]++;
-            localStorage.setItem('flapfingMedalCounts', JSON.stringify(this.medalCounts));
         } else {
             medalEl.style.display = 'none';
             noMedalEl.style.display = 'block';
@@ -198,14 +193,6 @@ export class Game {
         }
 
         document.getElementById('gameOverScreen').style.display = 'block';
-    }
-
-    getMedalInfo(score) {
-        if (score >= 40) return { name: 'PLATINUM', src: 'public/assets/medal_platinum.svg' };
-        if (score >= 20) return { name: 'GOLD', src: 'public/assets/medal_gold.svg' };
-        if (score >= 10) return { name: 'SILVER', src: 'public/assets/medal_silver.svg' };
-        if (score >= 5)  return { name: 'BRONZE', src: 'public/assets/medal_bronze.svg' };
-        return null;
     }
 
     flap() {

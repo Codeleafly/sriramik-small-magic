@@ -50,8 +50,13 @@
         <main id="signupForm" class="wood-panel hidden">
             <h1 class="flapfing-title">SIGN UP</h1>
             <div style="text-align: left;">
+                <input type="text" id="signupName" placeholder="Full Name" class="auth-input">
                 <input type="email" id="signupEmail" placeholder="Email" class="auth-input">
                 <input type="password" id="signupPassword" placeholder="Password" class="auth-input">
+                
+                <p style="font-family: 'Press Start 2P'; font-size: 8px; color: #5D4037; margin: 10px 0 5px 0;">PROFILE PHOTO (OPTIONAL)</p>
+                <input type="file" id="signupPhoto" accept="image/*" class="auth-input" style="font-size: 8px; padding: 8px;">
+                
                 <div id="signupError" style="color: #e74c3c; font-size: 10px; margin-top: 10px; font-family: 'Press Start 2P';"></div>
                 <button id="emailSignupBtn" class="btn btn-secondary">CREATE ACCOUNT</button>
                 <p style="text-align: center; margin-top: 15px; font-family: 'Press Start 2P'; font-size: 8px; color: #5D4037;">

@@ -1,5 +1,5 @@
 import { Game } from './game.js';
-import { Assets } from './assets.js';
+import { Assets, getMedalInfo } from './assets.js';
 import { Auth } from './services/auth.js';
 import { Database } from './services/db.js';
 
@@ -30,23 +30,55 @@ const cameraLoader = document.getElementById('cameraLoader');
 const statusText = document.getElementById('statusText');
 const gestureHint = document.getElementById('gestureHint');
 
+// --- UI MANAGEMENT ---
+function showUI(screenId) {
+    console.log(`UI: Showing ${screenId}`);
+    const screens = ['startScreen', 'gameOverScreen', 'loadingOverlay'];
+    screens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (id === screenId) {
+                el.style.display = 'block';
+                // Trigger opacity for transitions if needed
+                if (id === 'loadingOverlay') el.style.opacity = '1';
+            } else {
+                if (id === 'loadingOverlay') {
+                    el.style.opacity = '0';
+                    setTimeout(() => el.style.display = 'none', 500);
+                } else {
+                    el.style.display = 'none';
+                }
+            }
+        }
+    });
+}
+
 // --- INITIALIZATION ---
 async function init() {
-    // Safety Timeout: Hide loading overlay if it takes too long (10 seconds)
+    console.log("App: Initializing...");
+    
+    // ONE-TIME MIGRATION: Clear old localStorage high scores to force DB sync
+    if (localStorage.getItem('flapfingHighScore') || localStorage.getItem('flapfingMedalCounts')) {
+        console.log("App: Cleaning legacy local storage...");
+        localStorage.removeItem('flapfingHighScore');
+        localStorage.removeItem('flapfingMedalCounts');
+    }
+
+    // Safety Timeout: Hide loading overlay if it takes too long (8 seconds)
     const safetyTimeout = setTimeout(() => {
-        if (loadingOverlay && loadingOverlay.style.display !== 'none') {
-            console.warn("Loading taking too long, forcing overlay hide.");
-            loadingOverlay.style.opacity = '0';
-            setTimeout(() => loadingOverlay.style.display = 'none', 500);
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay && overlay.style.display !== 'none') {
+            console.warn("App: Loading taking too long, forcing overlay hide.");
+            showUI('startScreen');
         }
-    }, 10000);
+    }, 8000);
 
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('SW Registered'))
-                .catch(err => console.log('SW Registration Failed', err));
+                .then(reg => console.log('App: SW Registered'))
+                .catch(err => console.log('App: SW Registration Failed', err));
         });
     }
 
@@ -62,7 +94,7 @@ async function init() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User response to install prompt: ${outcome}`);
+                console.log(`App: User response to install prompt: ${outcome}`);
                 deferredPrompt = null;
                 installBtn.style.display = 'none';
             }
@@ -73,47 +105,66 @@ async function init() {
     Auth.onAuthStateChanged(async (user) => {
         currentUser = user;
         
+        if (!user) {
+            console.log("App: User logged out, redirecting to login...");
+            window.location.href = 'login.html';
+            return;
+        }
+
         try {
-            if (user) {
-                // User is logged in
-                console.log("User logged in:", user.email);
-                
-                // Show install button if prompt is available
-                if (deferredPrompt && installBtn) installBtn.style.display = 'block';
+            console.log("App: User logged in:", user.email);
+            
+            // Parallelize UI setup and asset loading
+            if (deferredPrompt && installBtn) installBtn.style.display = 'block';
 
-                // Load Game Assets and Game Instance
+            // 1. Load Assets (essential)
+            console.log("App: Loading assets...");
+            try {
                 await Assets.load();
-                
-                if (!game) {
-                    const canvas = document.getElementById('gameCanvas');
-                    game = new Game(canvas);
-                }
-                
-                game.resize();
-                updateHomeMedal();
-                
-                // Show Start Screen
-                startScreen.style.display = 'block';
-                
-                // Hide overlay
-                loadingOverlay.style.opacity = '0';
-                setTimeout(() => {
-                    if (loadingOverlay) loadingOverlay.style.display = 'none';
-                    clearTimeout(safetyTimeout);
-                }, 500);
-
-                // Add listeners ONLY ONCE
-                setupAuthenticatedListeners();
-
-            } else {
-                // User is logged out, redirect to login page
-                console.log("User logged out, redirecting...");
-                window.location.href = 'login.html';
+            } catch (e) {
+                console.error("App: Asset loading failed, continuing anyway", e);
             }
+            
+            // 2. Init Game Instance
+            if (!game) {
+                const canvas = document.getElementById('gameCanvas');
+                console.log("App: Creating game instance...");
+                game = new Game(canvas);
+            }
+            
+            // 3. Sync Score (non-blocking)
+            console.log("App: Syncing score...");
+            // Use a Promise.race to ensure this doesn't hang the whole UI
+            const scoreSyncPromise = Database.getUserScore(user);
+            const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(0), 4000));
+            const cloudScore = await Promise.race([scoreSyncPromise, timeoutPromise]);
+            
+            if (cloudScore > game.highScore) {
+                game.highScore = cloudScore;
+            }
+
+            // 4. Update UI Elements
+            const userGreeting = document.getElementById('userGreeting');
+            const userName = document.getElementById('userName');
+            if (userGreeting && userName) {
+                userName.innerText = (user.displayName || user.email?.split('@')[0] || 'PLAYER').toUpperCase();
+                userGreeting.style.display = 'block';
+            }
+
+            game.resize();
+            updateHomeMedal();
+            
+            // Final Transition
+            console.log("App: Initialization finished successfully.");
+            showUI('startScreen');
+            clearTimeout(safetyTimeout);
+
+            // Listeners
+            setupAuthenticatedListeners();
+
         } catch (error) {
-            console.error("Initialization error:", error);
-            // Hide overlay even on error so user isn't stuck
-            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            console.error("App: Critical initialization error:", error);
+            showUI('startScreen');
             clearTimeout(safetyTimeout);
         }
     });
@@ -126,10 +177,10 @@ async function init() {
     // Debugging Tool: Allow manual score testing
     window.saveTestScore = (score) => {
         if (currentUser) {
-            console.log("Saving test score:", score);
+            console.log("App: Saving test score:", score);
             Database.saveHighScore(currentUser, score);
         } else {
-            console.warn("User not logged in!");
+            console.warn("App: User not logged in!");
         }
     };
 }
@@ -150,7 +201,7 @@ function setupAuthenticatedListeners() {
 // --- Game Screen Functions ---
 function startGame() {
     if (!currentUser) {
-        console.error("Cannot start game, user not logged in.");
+        console.error("App: Cannot start game, user not logged in.");
         return;
     }
     if (game.gameRunning) return;
@@ -185,16 +236,10 @@ function updateHomeMedal() {
     const homeMedalIcon = document.getElementById('homeBestMedalIcon');
     const homeMedalName = document.getElementById('homeBestMedalName');
 
-    // Update individual medal counts
-    for (const [medal, count] of Object.entries(game.medalCounts)) {
-        const el = document.getElementById(`count-${medal}`);
-        if (el) el.innerText = count;
-    }
-
     if (highScore >= 5) {
         homeRecord.style.display = 'block';
         homeScore.innerText = highScore;
-        const medalInfo = game.getMedalInfo(highScore);
+        const medalInfo = getMedalInfo(highScore);
         if (medalInfo) {
             homeMedalIcon.src = medalInfo.src;
             homeMedalName.innerText = medalInfo.name + " MEDAL";
@@ -259,11 +304,11 @@ async function enableCamera() {
         });
 
         await camera.start();
-        console.log("Camera Initialized");
+        console.log("App: Camera Initialized");
         statusText.innerText = "Processing AI...";
         
     } catch (err) {
-        console.error(err);
+        console.error("App: Camera Error:", err);
         statusText.innerText = "Error: Camera Blocked";
         statusText.style.color = "red";
         cameraLoader.innerHTML = "Camera<br>Blocked";

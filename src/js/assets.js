@@ -1,3 +1,13 @@
+console.log("Assets System: Initializing v5");
+
+export const getMedalInfo = (score) => {
+    if (score >= 40) return { name: 'PLATINUM', src: 'public/assets/medal_platinum.svg' };
+    if (score >= 20) return { name: 'GOLD', src: 'public/assets/medal_gold.svg' };
+    if (score >= 10) return { name: 'SILVER', src: 'public/assets/medal_silver.svg' };
+    if (score >= 5)  return { name: 'BRONZE', src: 'public/assets/medal_bronze.svg' };
+    return null;
+};
+
 export const Assets = {
     images: {
         bird: new Image(),
@@ -9,51 +19,59 @@ export const Assets = {
     },
     sounds: {
         background: new Audio('public/assets/music.mp3'),
-        score: null, // Will be generated
-        flap: null,  // Will be generated
-        die: null    // Will be generated
+        score: null, 
+        flap: null,  
+        die: null    
     },
     
-    load: function() {
+    getMedalInfo: getMedalInfo,
+
+    load: async function() {
+        console.log("Assets System: Start Loading...");
         const promises = [];
-
-        // Load Images
-        this.images.bird.src = 'public/assets/bird.svg';
-        promises.push(this.loadImagePromise(this.images.bird));
-
-        this.images.background.src = 'public/assets/background.svg';
-        promises.push(this.loadImagePromise(this.images.background));
         
-        this.images.medalBronze.src = 'public/assets/medal_bronze.svg';
-        promises.push(this.loadImagePromise(this.images.medalBronze));
+        const assetsToLoad = [
+            { obj: this.images.bird, src: 'public/assets/bird.svg', name: 'Bird' },
+            { obj: this.images.background, src: 'public/assets/background.svg', name: 'Background' },
+            { obj: this.images.medalBronze, src: 'public/assets/medal_bronze.svg', name: 'Bronze Medal' },
+            { obj: this.images.medalSilver, src: 'public/assets/medal_silver.svg', name: 'Silver Medal' },
+            { obj: this.images.medalGold, src: 'public/assets/medal_gold.svg', name: 'Gold Medal' },
+            { obj: this.images.medalPlatinum, src: 'public/assets/medal_platinum.svg', name: 'Platinum Medal' }
+        ];
 
-        this.images.medalSilver.src = 'public/assets/medal_silver.svg';
-        promises.push(this.loadImagePromise(this.images.medalSilver));
+        assetsToLoad.forEach(asset => {
+            asset.obj.src = asset.src;
+            promises.push(this.loadImagePromise(asset.obj, asset.name));
+        });
 
-        this.images.medalGold.src = 'public/assets/medal_gold.svg';
-        promises.push(this.loadImagePromise(this.images.medalGold));
-
-        this.images.medalPlatinum.src = 'public/assets/medal_platinum.svg';
-        promises.push(this.loadImagePromise(this.images.medalPlatinum));
-
-        // Load Audio
         this.sounds.background.loop = true;
-        this.sounds.background.volume = 1.0;
-
-        // Generate synthetic sounds for now if we don't have files
-        // (User asked for custom sound effects, I'll synthesize them using AudioContext in audio.js, 
-        // or just placeholder objects here. Let's handle them in audio.js)
-
-        return Promise.all(promises);
+        this.sounds.background.volume = 0.8;
+        
+        // Use allSettled to prevent one missing file from breaking the whole game
+        const results = await Promise.allSettled(promises);
+        results.forEach((result, i) => {
+            if (result.status === 'rejected') {
+                console.warn(`Assets System: Failed to load ${assetsToLoad[i].name}`, result.reason);
+            }
+        });
+        
+        console.log("Assets System: Loading Complete (or partially complete)");
+        return true;
     },
 
-    loadImagePromise: function(img) {
+    loadImagePromise: function(img, name) {
         return new Promise((resolve, reject) => {
             if (img.complete) {
                 resolve();
             } else {
-                img.onload = resolve;
-                img.onerror = reject;
+                img.onload = () => {
+                    console.log(`Assets System: Loaded ${name}`);
+                    resolve();
+                };
+                img.onerror = (err) => {
+                    console.error(`Assets System: Error loading ${name}`);
+                    reject(err);
+                };
             }
         });
     }

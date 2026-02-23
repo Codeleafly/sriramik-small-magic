@@ -4,18 +4,25 @@ import {
     signInWithPopup, 
     signOut, 
     onAuthStateChanged,
-    sendEmailVerification
+    sendEmailVerification,
+    updateProfile
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { auth, googleProvider } from "../firebase-config.js";
 
 export const Auth = {
     user: null,
 
-    registerWithEmail: async (email, password) => {
+    registerWithEmail: async (email, password, displayName) => {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            await sendEmailVerification(userCredential.user);
-            return { success: true, user: userCredential.user, message: "Verification email sent!" };
+            const user = userCredential.user;
+            
+            await updateProfile(user, {
+                displayName: displayName
+            });
+
+            await sendEmailVerification(user);
+            return { success: true, user: user, message: "Verification email sent!" };
         } catch (error) {
             return { success: false, message: error.message };
         }
