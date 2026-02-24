@@ -19,10 +19,10 @@ export class Game {
         this.score = 0;
         this.frames = 0;
         
-        // Snappier Physics Constants
-        this.speed = 4.5;           // Keep fast pace
-        this.gravity = 0.38;        // Reduced from 0.42 for easier control
-        this.jumpImpulse = -6.5;    // Balanced jump (slightly reduced)
+        // Balanced Physics Constants (Closer to original feel)
+        this.speed = 4.2;           // Slightly slower horizontal speed
+        this.gravity = 0.28;        // Reduced from 0.38 for natural fall
+        this.jumpImpulse = -5.2;    // Adjusted for the lower gravity
         
         this.highScore = 0; // Fetched from Database on init
         this.medalCounts = {
@@ -116,8 +116,8 @@ export class Game {
         this.bird.update();
         this.bird.draw();
         
-        // 3. Pipe Generation (Improved Experience: Spawns earlier but more space between)
-        if (this.frames > 30 && this.frames % 70 === 0) {
+        // 3. Pipe Generation (Fast appearance, balanced spacing)
+        if (this.frames > 3 && this.frames % 75 === 0) {
             this.pipes.push(new Pipe(this, this.speed, this.audioController));
         }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flapfing-static-cache';
+const CACHE_NAME = 'flapfing-v9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

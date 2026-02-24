@@ -297,9 +297,9 @@ async function enableCamera() {
 
         hands.setOptions({
             maxNumHands: 1,
-            modelComplexity: 0, // 0 for maximum speed/low latency
-            minDetectionConfidence: 0.4, // Slightly lower for faster detection
-            minTrackingConfidence: 0.4
+            modelComplexity: 1, // Increased from 0 for better accuracy in varied lighting
+            minDetectionConfidence: 0.5, 
+            minTrackingConfidence: 0.5  // Higher confidence for tracking stability
         });
 
         hands.onResults(onResults);
@@ -353,7 +353,7 @@ function onResults(results) {
         const indexTip = landmarks[8];
         const thumbTip = landmarks[4];
         const distance = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
-        const pinchThreshold = 0.12; // Much more sensitive for faster detection
+        const pinchThreshold = 0.08; // Reduced from 0.18 for more precise "touching" requirement
 
         if (distance < pinchThreshold) {
             outputCtx.beginPath();
@@ -364,7 +364,7 @@ function onResults(results) {
             if (!isPinching) {
                 isPinching = true; 
                 const now = Date.now();
-                if (now - lastActionTime > 40) { // Minimum debounce for instant response
+                if (now - lastActionTime > 25) { // Faster debounce for rapid jumping
                     if (game && game.gameRunning) {
                         game.bird.flap();
                         lastActionTime = now;
