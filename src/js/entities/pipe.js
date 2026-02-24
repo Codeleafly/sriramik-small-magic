@@ -8,15 +8,29 @@ export class Pipe {
         
         // Stabilized Difficulty: Increased gap for easier navigation
         const scale = Math.min(1, game.height / 800);
-        this.gapSize = 160 * scale; // Increased from 120
+        this.gapSize = 190 * scale; // Significantly increased from 160 for easier gameplay
         this.width = 52 * scale;
         this.hitboxBuffer = 5 * scale;
         
         // Playable height calculation: Keep gaps in a reachable vertical zone
-        const minTop = game.height * 0.15; // Gap won't be too high
-        const maxTop = game.height * 0.60; // Gap won't be too low
+        const minTop = game.height * 0.10; 
+        const maxTop = game.height * 0.55;
         
-        this.topHeight = minTop + Math.random() * (maxTop - minTop);
+        // Smooth transition from last pipe
+        let targetTop = minTop + Math.random() * (maxTop - minTop);
+        
+        if (game.pipes.length > 0) {
+            const lastPipe = game.pipes[game.pipes.length - 1];
+            const maxDiff = game.height * 0.25; // Limit vertical jump to 25% of screen height
+            
+            // Clamp the new height within range of the last one
+            const lowBound = Math.max(minTop, lastPipe.topHeight - maxDiff);
+            const highBound = Math.min(maxTop, lastPipe.topHeight + maxDiff);
+            
+            targetTop = lowBound + Math.random() * (highBound - lowBound);
+        }
+        
+        this.topHeight = targetTop;
         this.bottomY = this.topHeight + this.gapSize;
         
         this.color = '#73bf2e';
