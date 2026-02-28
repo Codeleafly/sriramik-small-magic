@@ -24,10 +24,21 @@
             align-items: center;
             justify-content: center;
         }
-        .leaderboard-full {
-            max-height: none !important;
-            overflow-y: visible !important;
-            background: rgba(214, 194, 145, 0.95) !important;
+        /* Custom scrollbar for better look */
+        .leaderboard-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .leaderboard-container::-webkit-scrollbar-track {
+            background: #553A26;
+            border-radius: 4px;
+        }
+        .leaderboard-container::-webkit-scrollbar-thumb {
+            background: #E86A17;
+            border-radius: 4px;
+        }
+        .leaderboard-container {
+            max-height: 350px !important; /* Fixed height for the scrollable box */
+            overflow-y: auto !important;
         }
     </style>
 </head>
@@ -36,12 +47,11 @@
         <h1 class="flapfing-title" style="font-size: 28px !important; margin-bottom: 10px !important;">RANKINGS</h1>
         <p style="font-family: 'Press Start 2P'; font-size: 8px; color: #5D4037; margin-bottom: 15px;">Top Players</p>
         
-        <div id="leaderboardList" class="leaderboard-container leaderboard-full">
+        <div id="leaderboardList" class="leaderboard-container">
             <div class="leader-row">Searching...</div>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
-            <button id="loadMoreBtn" class="btn btn-secondary" style="display: none;">LOAD MORE</button>
             <a href="index.html" class="btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center; background: #e67e22; box-shadow: 0 5px 0 #d35400;">PLAY GAME</a>
         </div>
     </section>

@@ -4,9 +4,9 @@ import { getMedalInfo } from './assets.js';
 import { clearAllCookies } from './utils/storage-cleaner.js';
 
 const leaderboardList = document.getElementById('leaderboardList');
-const loadMoreBtn = document.getElementById('loadMoreBtn');
-let currentLimit = 50; 
+let currentLimit = 10; 
 let isLoading = false;
+let hasMore = true; // Track if more scores might be available
 
 async function init() {
     clearAllCookies();
@@ -22,10 +22,18 @@ async function init() {
         }
     });
 
-    if (loadMoreBtn) {
-        loadMoreBtn.addEventListener('click', () => {
-            currentLimit += 50;
-            loadScores(false);
+    // Infinite Scroll Logic
+    if (leaderboardList) {
+        leaderboardList.addEventListener('scroll', () => {
+            if (isLoading || !hasMore) return;
+            
+            // Check if we are near the bottom of the scrollable container
+            const { scrollTop, scrollHeight, clientHeight } = leaderboardList;
+            if (scrollTop + clientHeight >= scrollHeight - 20) {
+                console.log("Leaderboard: Scroll bottom reached, loading more...");
+                currentLimit += 10;
+                loadScores(false);
+            }
         });
     }
 }
@@ -37,26 +45,28 @@ async function loadScores(isInitial = false) {
     try {
         if (isInitial) {
             leaderboardList.innerHTML = '<div class="leader-row" style="justify-content: center;">Fetching Top Players...</div>';
+            currentLimit = 10;
+            hasMore = true;
         }
 
-        console.log(`Leaderboard: Fetching ${currentLimit} scores...`);
+        console.log(`Leaderboard: Fetching Top ${currentLimit} scores...`);
         const result = await Database.getTopScores(currentLimit);
         const scores = result.scores || [];
 
         console.log(`Leaderboard: Received ${scores.length} scores.`);
 
-        if (isInitial) {
-            leaderboardList.innerHTML = '';
+        // If we got fewer scores than requested, we've reached the end
+        if (scores.length < currentLimit) {
+            hasMore = false;
         }
+
+        // Always clear before rendering the full set of scores to maintain order/rank
+        leaderboardList.innerHTML = '';
 
         if (scores.length === 0) {
-            if (isInitial) leaderboardList.innerHTML = '<div class="leader-row" style="justify-content: center;">No scores found yet!</div>';
+            leaderboardList.innerHTML = '<div class="leader-row" style="justify-content: center;">No scores found yet!</div>';
         } else {
-            renderScores(scores, isInitial);
-        }
-
-        if (loadMoreBtn) {
-            loadMoreBtn.style.display = scores.length >= currentLimit ? 'block' : 'none';
+            renderScores(scores, false);
         }
     } catch (error) {
         console.error("Leaderboard Error:", error);

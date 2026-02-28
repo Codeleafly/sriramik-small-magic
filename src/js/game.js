@@ -19,10 +19,10 @@ export class Game {
         this.score = 0;
         this.frames = 0;
         
-        // Balanced Physics Constants (Closer to original feel)
-        this.speed = 4.2;           // Slightly slower horizontal speed
-        this.gravity = 0.28;        // Reduced from 0.38 for natural fall
-        this.jumpImpulse = -5.2;    // Adjusted for the lower gravity
+        // Balanced Physics Constants (Classic Flappy Bird feel)
+        this.speed = 3.6;           // Reduced from 4.2 for more manageable speed
+        this.gravity = 0.22;        // Reduced from 0.28 for more floaty/natural fall
+        this.jumpImpulse = -4.6;    // Adjusted for the lower gravity to maintain balance
         
         this.highScore = 0; // Fetched from Database on init
         this.medalCounts = {
