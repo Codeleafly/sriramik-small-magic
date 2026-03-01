@@ -8,7 +8,7 @@ export class Pipe {
         
         // Stabilized Difficulty: Very generous gap for comfortable navigation
         const scale = Math.min(1, game.height / 800);
-        this.gapSize = 220 * scale; // Increased from 190
+        this.gapSize = 230 * scale; // Increased from 220 for extra comfort
         this.width = 52 * scale;
         this.hitboxBuffer = 5 * scale;
         

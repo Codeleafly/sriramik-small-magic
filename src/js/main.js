@@ -297,9 +297,9 @@ async function enableCamera() {
 
         hands.setOptions({
             maxNumHands: 1,
-            modelComplexity: 1, // Increased from 0 for better accuracy in varied lighting
-            minDetectionConfidence: 0.5, 
-            minTrackingConfidence: 0.5  // Higher confidence for tracking stability
+            modelComplexity: 1, // Restored to 1 for better landmark stability
+            minDetectionConfidence: 0.7, // Increased for better accuracy
+            minTrackingConfidence: 0.7   // Increased for better accuracy
         });
 
         hands.onResults(onResults);
@@ -328,6 +328,19 @@ async function enableCamera() {
     }
 }
 
+// State for smoothing and hysteresis
+let pinchState = 'OPEN'; // 'OPEN' or 'PINCHED'
+const PINCH_START_THRESHOLD = 0.06; // Strict start
+const PINCH_RELEASE_THRESHOLD = 0.18; // Generous release (must open hand clearly)
+
+// Smoothing variables
+const smoothedLandmarks = [];
+const SMOOTHING_FACTOR = 0.5; // Lower = more smooth, Higher = more responsive
+
+function lerp(start, end, amt) {
+    return (1 - amt) * start + amt * end;
+}
+
 function onResults(results) {
     if (!firstFrameDetected) {
         firstFrameDetected = true;
@@ -346,41 +359,108 @@ function onResults(results) {
     outputCtx.drawImage(results.image, 0, 0, outputCanvas.width, outputCanvas.height);
 
     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        const landmarks = results.multiHandLandmarks[0];
-        drawConnectors(outputCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
-        drawLandmarks(outputCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 2});
+        const rawLandmarks = results.multiHandLandmarks[0];
 
-        const indexTip = landmarks[8];
+        // --- 1. SMOOTHING LOGIC ---
+        if (smoothedLandmarks.length === 0) {
+            // Initialize
+            for (let i = 0; i < rawLandmarks.length; i++) {
+                smoothedLandmarks.push({ x: rawLandmarks[i].x, y: rawLandmarks[i].y, z: rawLandmarks[i].z });
+            }
+        } else {
+            // Apply EMA
+            for (let i = 0; i < rawLandmarks.length; i++) {
+                smoothedLandmarks[i].x = lerp(smoothedLandmarks[i].x, rawLandmarks[i].x, SMOOTHING_FACTOR);
+                smoothedLandmarks[i].y = lerp(smoothedLandmarks[i].y, rawLandmarks[i].y, SMOOTHING_FACTOR);
+                smoothedLandmarks[i].z = lerp(smoothedLandmarks[i].z, rawLandmarks[i].z, SMOOTHING_FACTOR);
+            }
+        }
+
+        const landmarks = smoothedLandmarks;
+
+        // --- 2. ROBUST METRICS ---
         const thumbTip = landmarks[4];
-        const distance = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
-        const pinchThreshold = 0.08; // Reduced from 0.18 for more precise "touching" requirement
+        const indexTip = landmarks[8];
+        const middleMCP = landmarks[9]; // Middle finger base (more stable center)
+        const wrist = landmarks[0];
 
-        if (distance < pinchThreshold) {
-            outputCtx.beginPath();
-            outputCtx.arc(indexTip.x * outputCanvas.width, indexTip.y * outputCanvas.height, 15, 0, 2 * Math.PI);
-            outputCtx.fillStyle = "#00FF00";
-            outputCtx.fill();
+        // Calculate Scale (Hand Size) using Wrist -> Middle MCP
+        const handSize = Math.hypot(wrist.x - middleMCP.x, wrist.y - middleMCP.y);
+        
+        // Calculate Pinch Distance
+        const rawDistance = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
+        
+        // Normalize
+        const normalizedDistance = rawDistance / handSize;
 
-            if (!isPinching) {
-                isPinching = true; 
+        // --- 3. LOGIC & VISUALS ---
+        let handColor = '#FFFFFF';
+        
+        if (pinchState === 'OPEN') {
+            if (normalizedDistance < PINCH_START_THRESHOLD) {
+                pinchState = 'PINCHED';
+                handColor = '#00FF00'; // Green when pinched
+                
+                // Trigger Action
                 const now = Date.now();
-                if (now - lastActionTime > 25) { // Faster debounce for rapid jumping
+                if (now - lastActionTime > 150) { 
                     if (game && game.gameRunning) {
                         game.bird.flap();
-                        lastActionTime = now;
                     } else if (isCameraReady && !game.gameRunning) {
                         if (now - lastStartTrigger > 1000) {
                             startGame();
                             lastStartTrigger = now;
                         }
                     }
+                    lastActionTime = now;
                 }
             }
-        } else {
-            isPinching = false;
+        } else if (pinchState === 'PINCHED') {
+            handColor = '#00FF00';
+            if (normalizedDistance > PINCH_RELEASE_THRESHOLD) {
+                pinchState = 'OPEN';
+                handColor = '#FFFFFF';
+            }
         }
+
+        // Draw Hand
+        drawConnectors(outputCtx, landmarks, HAND_CONNECTIONS, {color: handColor, lineWidth: 2});
+        drawLandmarks(outputCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 2});
+
+        // --- 4. DEBUG VISUALS (PINCH METER) ---
+        // Draw a bar on the left side to show pinch strength
+        const barHeight = 100;
+        const barWidth = 10;
+        const barX = 10;
+        const barY = outputCanvas.height - barHeight - 10;
+        
+        // Background
+        outputCtx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        outputCtx.fillRect(barX, barY, barWidth, barHeight);
+
+        // Current Value (Inverted: Lower distance = Higher bar)
+        // Max range approx 0.5?
+        const fillPercent = Math.max(0, Math.min(1, 1 - (normalizedDistance * 2))); 
+        outputCtx.fillStyle = pinchState === 'PINCHED' ? '#00FF00' : '#FFFF00';
+        outputCtx.fillRect(barX, barY + (barHeight * (1 - fillPercent)), barWidth, barHeight * fillPercent);
+
+        // Draw Threshold Lines
+        // Start Threshold (High on bar)
+        const startY = barY + (barHeight * (1 - (1 - PINCH_START_THRESHOLD * 2)));
+        outputCtx.strokeStyle = "#00FF00";
+        outputCtx.beginPath(); outputCtx.moveTo(barX, startY); outputCtx.lineTo(barX + 15, startY); outputCtx.stroke();
+
+        // Release Threshold (Low on bar)
+        const releaseY = barY + (barHeight * (1 - (1 - PINCH_RELEASE_THRESHOLD * 2)));
+        outputCtx.strokeStyle = "#FFFFFF";
+        outputCtx.beginPath(); outputCtx.moveTo(barX, releaseY); outputCtx.lineTo(barX + 15, releaseY); outputCtx.stroke();
+
     } else {
-        isPinching = false;
+        pinchState = 'OPEN';
+        // Reset smoothing if hand is lost for a while? 
+        // For simplicity, we keep the array, it will snap to new pos on next frame, 
+        // but let's clear it to avoid a "flying" hand effect if it reappears elsewhere.
+        if (smoothedLandmarks.length > 0) smoothedLandmarks.length = 0;
     }
     outputCtx.restore();
 }

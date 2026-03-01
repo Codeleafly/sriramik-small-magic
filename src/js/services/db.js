@@ -85,12 +85,15 @@ export const Database = {
         }
     },
 
-    async getTopScores(limitCount = 50) {
-        console.log(`DB: Fetching Top Scores...`);
+    async getTopScores(limitCount = 10) {
+        console.log(`DB: Fetching Top ${limitCount} Scores...`);
         const scoresRef = ref(db, 'scores');
+        // Firebase Realtime Database sorts in ascending order.
+        // To get top scores (descending), we use limitToLast which fetches the highest values.
+        const topScoresQuery = query(scoresRef, orderByChild('score'), limitToLast(limitCount));
         
         try {
-            const snapshot = await get(scoresRef);
+            const snapshot = await get(topScoresQuery);
             const scores = [];
             if (snapshot.exists()) {
                 snapshot.forEach((childSnapshot) => {
@@ -99,13 +102,13 @@ export const Database = {
                         scores.push({ id: childSnapshot.key, ...data });
                     }
                 });
+                // Sort the limited results DESCENDING (highest first) for the UI
                 scores.sort((a, b) => b.score - a.score);
             }
-            const limitedScores = scores.slice(0, limitCount);
-            console.log(`DB: Fetched ${limitedScores.length} scores.`);
-            return { scores: limitedScores };
-        } catch (e) {
-            console.error("DB: Error getting top scores:", e);
+            console.log(`DB: Fetched ${scores.length} scores from server.`);
+            return { scores: scores };
+        } catch (error) {
+            console.error("DB: Error getting top scores:", error);
             return { scores: [] };
         }
     }
