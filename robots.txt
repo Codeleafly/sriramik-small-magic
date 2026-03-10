@@ -1,3 +1,10 @@
 User-agent: *
 Allow: /
+Disallow: /private/
+Disallow: /config/
+
+# Sitemap for search engines
 Sitemap: https://sriramiks-small-magic.netlify.app/sitemap.xml
+
+# Crawl-delay for better performance
+Crawl-delay: 1
